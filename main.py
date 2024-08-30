@@ -57,9 +57,10 @@ async def get_nx(tid: str):
         raise HTTPException(status_code=404, detail="Item not found")
 
 
+@app.get('/uptime')
 @app.head('/uptime')
 def uptime():
-    return '', 200
+    return Response(status_code=200)
 
 if __name__ == '__main__':
     import uvicorn
