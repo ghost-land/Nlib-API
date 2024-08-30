@@ -34,6 +34,13 @@ def find_id_type(tid: str):
     elif os.path.exists(update_path):
         return 'update', update_path
     else:
+        retro_path = os.path.join(config['database-path'], 'retro')
+        if os.path.exists(retro_path):
+            for console in os.listdir(retro_path):
+                console_path = os.path.join(retro_path, console, f'{tid}.json')
+                if os.path.exists(console_path):
+                    return 'retro', console_path
+                
         return None, None
 
 
