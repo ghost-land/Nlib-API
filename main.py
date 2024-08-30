@@ -72,7 +72,8 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
 @app.get('/nx/{tid}/{asset_type}')
 @app.get('/nx/{tid}/{asset_type}/{screen_id}')
 async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
-    asset_type = asset_type.lower()
+    if asset_type:
+        asset_type = asset_type.lower()
     id_type, file_path = find_id_type(tid)
 
     if id_type:
