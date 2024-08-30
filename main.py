@@ -43,16 +43,68 @@ def find_id_type(tid: str):
                 
         return None, None
 
+def get_game_screenshot(tid: str, screen_id: 1):
+    screen_path = os.path.join(config['database-path'], 'media', f'{tid}', 'screens', f'screen_{screen_id}.jpg')
+    if os.path.exists(screen_path):
+        with open(screen_path, 'rb') as file:
+            return file.read()
+            
+    return None
 
-@app.head('/nx/{tid}')
+def get_game_icon(tid, size: tuple = (1024, 1024)):
+    icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'icon.jpg')
+    if os.path.exists(icon_path):
+        with open(icon_path, 'rb') as file:
+            return file.read()
+
+    return None
+
+def get_game_banner(tid, size: tuple = (1980, 1080)):
+    icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
+    if os.path.exists(icon_path):
+        with open(icon_path, 'rb') as file:
+            return file.read()
+
+    return None
+
+
 @app.get('/nx/{tid}')
-async def get_nx(tid: str):
+@app.get('/nx/{tid}/{asset_type}')
+@app.get('/nx/{tid}/{asset_type}/{screen_id}')
+async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
+    asset_type = asset_type.lower()
     id_type, file_path = find_id_type(tid)
 
     if id_type:
-        with open(file_path, 'r') as file:
-            content = file.read()
-        return Response(content=content, media_type="application/json")
+        if asset_type == 'icon':
+            # Handle icon request
+            content = get_game_icon(tid, size=(1024, 1024))
+            if content: 
+                return Response(content=content, media_type="image/jpeg")
+            else:
+                raise HTTPException(status_code=404, detail=f"Icon for {tid} not found")
+            
+        if asset_type == 'banner':
+            # Handle banner request
+            content = get_game_banner(tid, size=(1980, 1080))
+            if content: 
+                return Response(content=content, media_type="image/jpeg")
+            else:
+                raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
+            
+        elif asset_type == 'screen':
+            # Handle screenshot request
+            content = get_game_screenshot(tid, screen_id)
+            if content: 
+                return Response(content=content, media_type="image/jpeg")
+            else:
+                raise HTTPException(status_code=404, detail=f"Screenshot {tid}:{screen_id} not found")
+            
+        else:
+            # Handle original JSON request
+            with open(file_path, 'r') as file:
+                content = file.read()
+            return Response(content=content, media_type="application/json")
     else:
         raise HTTPException(status_code=404, detail="Item not found")
 
