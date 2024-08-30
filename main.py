@@ -22,27 +22,33 @@ if 'database-path' not in config or not os.path.exists(config['database-path']):
 app = FastAPI()
 
 
-@app.head('/nx/{tid}')
-@app.get('/nx/{tid}')
-async def get_nx(tid: str):
+def find_id_type(tid: str):
     base_path = os.path.join(config['database-path'], 'base', f'{tid}.json')
     dlc_path = os.path.join(config['database-path'], 'dlc', f'{tid}.json')
     update_path = os.path.join(config['database-path'], 'update', f'{tid}.json')
 
     if os.path.exists(base_path):
-        with open(base_path, 'r') as file:
-            content = file.read()
-        return Response(content=content, media_type="application/json")
+        return 'base', base_path
     elif os.path.exists(dlc_path):
-        with open(dlc_path, 'r') as file:
-            content = file.read()
-        return Response(content=content, media_type="application/json")
+        return 'dlc', dlc_path
     elif os.path.exists(update_path):
-        with open(update_path, 'r') as file:
+        return 'update', update_path
+    else:
+        return None, None
+
+
+@app.head('/nx/{tid}')
+@app.get('/nx/{tid}')
+async def get_nx(tid: str):
+    id_type, file_path = find_id_type(tid)
+
+    if id_type:
+        with open(file_path, 'r') as file:
             content = file.read()
         return Response(content=content, media_type="application/json")
     else:
         raise HTTPException(status_code=404, detail="Item not found")
+
 
 @app.head('/uptime')
 def uptime():
