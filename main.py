@@ -16,6 +16,8 @@ def load_config():
         config['app-host'] = config.get('app-host', '0.0.0.0')
         config['app-port'] = config.get('app-port', 80)
         config['database-path'] = config.get('database-path', '/data/NX-DB')
+        
+        config['limiter-enabled'] = config.get('limiter-enabled', True)
         config['rate-limit'] = config.get('rate-limit', 1)
         config['rate-limit-period'] = config.get('rate-limit-period', 5)
         
@@ -56,7 +58,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
-app.add_middleware(RateLimitMiddleware)
+if config['limiter-enabled']:
+    app.add_middleware(RateLimitMiddleware)
 
 
 @lru_cache(maxsize=128)
