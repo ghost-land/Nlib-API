@@ -1,6 +1,7 @@
-import yaml
 import os
 import sys
+import yaml
+import json
 from functools import lru_cache
 from fastapi import FastAPI, Response, HTTPException
 from fastapi.responses import JSONResponse
@@ -120,9 +121,10 @@ async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
             
         else:
             # Handle original JSON request
-            with open(file_path, 'r') as file:
-                content = file.read()
-            return Response(content=content, media_type="application/json")
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = json.load(file)
+                content['type'] = id_type
+            return JSONResponse(content=content, media_type="application/json")
     else:
         raise HTTPException(status_code=404, detail="Item not found")
 
