@@ -2,10 +2,12 @@ import yaml
 import os
 import sys
 from fastapi import FastAPI, Response, HTTPException
+from fastapi.responses import JSONResponse
 
 def load_config():
     with open('config.yml', 'r') as config_file:
         config = yaml.safe_load(config_file)
+        config['domain'] = config.get('domain', 'api.nlib.cc')
         config['app-host'] = config.get('app-host', '0.0.0.0')
         config['app-port'] = config.get('app-port', 80)
         config['database-path'] = config.get('database-path', '/data/NX-DB')
@@ -100,6 +102,17 @@ async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
                 return Response(content=content, media_type="image/jpeg")
             else:
                 raise HTTPException(status_code=404, detail=f"Screenshot {tid}:{screen_id} not found")
+        
+        elif asset_type == 'screens':
+            # Handle all screenshots request
+            screenshots_dir = os.path.join(config['database-path'], 'media', f'{tid}', 'screens')
+            if os.path.exists(screenshots_dir):
+                screenshot_urls = [f"https://{config['domain']}/nx/{tid}/screen/{i+1}" for i in range(len([f for f in os.listdir(screenshots_dir) if f.endswith('.jpg')]))]
+                screenshot_urls.sort()
+                count = len(screenshot_urls)
+                return JSONResponse(content={"count": count, "screenshots": screenshot_urls}, media_type="application/json")
+            else:
+                return JSONResponse(content={"count": 0, "screenshots": []}, media_type="application/json")
             
         else:
             # Handle original JSON request
