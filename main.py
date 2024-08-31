@@ -3,8 +3,11 @@ import sys
 import yaml
 import json
 from functools import lru_cache
-from fastapi import FastAPI, Response, HTTPException
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from time import time
+from collections import defaultdict
 
 def load_config():
     with open('config.yml', 'r') as config_file:
@@ -13,6 +16,8 @@ def load_config():
         config['app-host'] = config.get('app-host', '0.0.0.0')
         config['app-port'] = config.get('app-port', 80)
         config['database-path'] = config.get('database-path', '/data/NX-DB')
+        config['rate-limit'] = config.get('rate-limit', 1)
+        config['rate-limit-period'] = config.get('rate-limit-period', 5)
         
         return config
 
@@ -24,6 +29,35 @@ if 'database-path' not in config or not os.path.exists(config['database-path']):
     sys.exit(1)
 
 app = FastAPI()
+
+# In-memory store for request counts
+request_counts = defaultdict(list)
+RATE_LIMIT = config['rate-limit']  # Number of requests
+RATE_LIMIT_PERIOD = config['rate-limit-period']  # Time period in seconds
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host
+        current_time = time()
+        request_times = request_counts[client_ip]
+
+        # Remove old requests
+        request_times = [t for t in request_times if current_time - t < RATE_LIMIT_PERIOD]
+        request_counts[client_ip] = request_times
+
+        if len(request_times) >= RATE_LIMIT:
+            return JSONResponse(status_code=429, content={"detail": "Too many requests, please try again later."})
+
+        # Add the current request time to the list
+        request_times.append(current_time)
+        request_counts[client_ip] = request_times
+
+        # Process the request
+        response = await call_next(request)
+        return response
+
+app.add_middleware(RateLimitMiddleware)
+
 
 @lru_cache(maxsize=128)
 def find_id_type(tid: str):
