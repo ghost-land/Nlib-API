@@ -75,10 +75,13 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
     return None
 
 
-@app.get('/nx/{tid}')
-@app.get('/nx/{tid}/{asset_type}')
-@app.get('/nx/{tid}/{asset_type}/{screen_id}')
-async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
+@app.get('/{platform}/{tid}')
+@app.get('/{platform}/{tid}/{asset_type}')
+@app.get('/{platform}/{tid}/{asset_type}/{screen_id}')
+async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int = 1):
+    if platform not in ['nx', 'switch']:
+        raise HTTPException(status_code=404, detail=f"Platform {platform} not supported")
+    
     if asset_type:
         asset_type = asset_type.lower()
     console, id_type, file_path = find_id_type(tid)
