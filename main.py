@@ -1,6 +1,7 @@
 import yaml
 import os
 import sys
+from functools import lru_cache
 from fastapi import FastAPI, Response, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -23,7 +24,7 @@ if 'database-path' not in config or not os.path.exists(config['database-path']):
 
 app = FastAPI()
 
-
+@lru_cache(maxsize=128)
 def find_id_type(tid: str):
     base_path = os.path.join(config['database-path'], 'base', f'{tid}.json')
     dlc_path = os.path.join(config['database-path'], 'dlc', f'{tid}.json')
@@ -45,6 +46,7 @@ def find_id_type(tid: str):
                 
         return None, None
 
+@lru_cache(maxsize=128)
 def get_game_screenshot(tid: str, screen_id: 1):
     screen_path = os.path.join(config['database-path'], 'media', f'{tid}', 'screens', f'screen_{screen_id}.jpg')
     if os.path.exists(screen_path):
@@ -53,6 +55,7 @@ def get_game_screenshot(tid: str, screen_id: 1):
             
     return None
 
+@lru_cache(maxsize=128)
 def get_game_icon(tid, size: tuple = (1024, 1024)):
     icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'icon.jpg')
     if os.path.exists(icon_path):
@@ -61,6 +64,7 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
 
     return None
 
+@lru_cache(maxsize=128)
 def get_game_banner(tid, size: tuple = (1980, 1080)):
     icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
     if os.path.exists(icon_path):
