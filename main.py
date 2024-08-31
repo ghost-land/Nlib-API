@@ -121,7 +121,13 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
     
     if asset_type:
         asset_type = asset_type.lower()
+    
     console, id_type, file_path = find_id_type(tid)
+    
+    if tid in ['full', 'all']:
+        # Handle full/all JSON file request
+        with open(os.path.join(config['database-path'], 'fulldb.json'), 'r') as file:
+            return Response(status_code=200, content=file.read())
 
     if id_type:
         if asset_type == 'icon':
