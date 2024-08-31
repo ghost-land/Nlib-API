@@ -32,18 +32,18 @@ def find_id_type(tid: str):
     update_path = os.path.join(config['database-path'], 'update', f'{tid}.json')
 
     if os.path.exists(base_path):
-        return 'base', base_path
+        return 'nx', 'base', base_path
     elif os.path.exists(dlc_path):
-        return 'dlc', dlc_path
+        return 'nx', 'dlc', dlc_path
     elif os.path.exists(update_path):
-        return 'update', update_path
+        return 'nx', 'update', update_path
     else:
         retro_path = os.path.join(config['database-path'], 'retro')
         if os.path.exists(retro_path):
             for console in os.listdir(retro_path):
                 console_path = os.path.join(retro_path, console, f'{tid}.json')
                 if os.path.exists(console_path):
-                    return 'retro', console_path
+                    return console, 'retro', console_path
                 
         return None, None
 
@@ -81,7 +81,7 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
 async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
     if asset_type:
         asset_type = asset_type.lower()
-    id_type, file_path = find_id_type(tid)
+    console, id_type, file_path = find_id_type(tid)
 
     if id_type:
         if asset_type == 'icon':
@@ -123,6 +123,7 @@ async def get_nx(tid: str, asset_type: str = None, screen_id: int = 1):
             # Handle original JSON request
             with open(file_path, 'r', encoding='utf-8') as file:
                 content = json.load(file)
+                content['console'] = console
                 content['type'] = id_type
             return JSONResponse(content=content, media_type="application/json")
     else:
