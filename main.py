@@ -45,7 +45,7 @@ def find_id_type(tid: str):
                 if os.path.exists(console_path):
                     return console, 'retro', console_path
                 
-        return None, None
+        return None, None, None
 
 @lru_cache(maxsize=128)
 def get_game_screenshot(tid: str, screen_id: 1):
