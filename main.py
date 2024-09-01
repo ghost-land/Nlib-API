@@ -121,6 +121,8 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
     
     if asset_type:
         asset_type = asset_type.lower()
+    if tid:
+        tid = tid.upper()
     
     console, id_type, file_path = find_id_type(tid)
     
@@ -128,8 +130,24 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         # Handle full/all JSON file request
         with open(os.path.join(config['database-path'], 'fulldb.json'), 'r') as file:
             return Response(status_code=200, content=file.read())
+    
+    # /nx/base/0100A0D004FB0000
+    elif tid in ['BASE', 'DLC', 'UPDATE']:
+        type = tid
+        tid = asset_type
+        console, id_type, file_path = find_id_type(tid)
+        
+        if id_type.upper() != type:
+            raise HTTPException(status_code=400, detail=f"The requested TID {tid} is not of type {type}")
+    
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = json.load(file)
+            content['console'] = console
+            content['type'] = id_type
+        return JSONResponse(content=content, media_type="application/json")
 
     if id_type:
+        # nx/0100A0D004FB0000/icon
         if asset_type == 'icon':
             # Handle icon request
             content = get_game_icon(tid, size=(1024, 1024))
@@ -138,6 +156,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             else:
                 raise HTTPException(status_code=404, detail=f"Icon for {tid} not found")
             
+        # nx/0100A0D004FB0000/banner
         if asset_type == 'banner':
             # Handle banner request
             content = get_game_banner(tid, size=(1980, 1080))
@@ -146,6 +165,8 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             else:
                 raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
             
+        # nx/0100A0D004FB0000/screen
+        # nx/0100A0D004FB0000/screen/4
         elif asset_type == 'screen':
             # Handle screenshot request
             content = get_game_screenshot(tid, screen_id)
@@ -154,6 +175,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             else:
                 raise HTTPException(status_code=404, detail=f"Screenshot {tid}:{screen_id} not found")
         
+        # nx/0100A0D004FB0000/screens
         elif asset_type == 'screens':
             # Handle all screenshots request
             screenshots_dir = os.path.join(config['database-path'], 'media', f'{tid}', 'screens')
@@ -167,6 +189,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             
         else:
             # Handle original JSON request
+            # /nx/0100A0D004FB0000 (auto type)
             with open(file_path, 'r', encoding='utf-8') as file:
                 content = json.load(file)
                 content['console'] = console
