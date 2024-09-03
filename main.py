@@ -137,7 +137,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         tid = asset_type
         console, id_type, file_path = find_id_type(tid)
         
-        if id_type.upper() != type:
+        if id_type and id_type.upper() != type:
             raise HTTPException(status_code=400, detail=f"The requested TID {tid} is not of type {type}")
     
         with open(file_path, 'r', encoding='utf-8') as file:
