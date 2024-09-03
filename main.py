@@ -15,7 +15,7 @@ def load_config():
         config['domain'] = config.get('domain', 'api.nlib.cc')
         config['app-host'] = config.get('app-host', '0.0.0.0')
         config['app-port'] = config.get('app-port', 80)
-        config['database-path'] = config.get('database-path', '/data/NX-DB')
+        config['database-path'] = 'tests/test-db' if 'pytest' in sys.modules else config.get('database-path', '/data/NX-DB')
         
         config['limiter-enabled'] = config.get('limiter-enabled', True)
         config['rate-limit'] = config.get('rate-limit', 1)
