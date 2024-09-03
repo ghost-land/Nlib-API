@@ -17,7 +17,7 @@ def load_config():
         config['app-port'] = config.get('app-port', 80)
         config['database-path'] = 'tests/test-db' if 'pytest' in sys.modules else config.get('database-path', '/data/NX-DB')
         
-        config['limiter-enabled'] = config.get('limiter-enabled', True)
+        config['limiter-enabled'] = False if 'pytest' in sys.modules else config.get('limiter-enabled', True)
         config['rate-limit'] = config.get('rate-limit', 1)
         config['rate-limit-period'] = config.get('rate-limit-period', 5)
         
