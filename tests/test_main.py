@@ -8,6 +8,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, message="The 'app
 client = TestClient(app)
 
 GAME_ID = "0100A0D004FB0000"
+DLC_ID = "0100A0C00D847001"
+UPDATE_ID = "0100997014004800"
 
 def test_uptime():
     response = client.get("/uptime")
@@ -77,14 +79,14 @@ def test_get_nx_base():
     assert response.json().get("type") == "base"
 
 def test_get_nx_dlc():
-    response = client.get(f"/nx/DLC/{GAME_ID}")
+    response = client.get(f"/nx/DLC/{DLC_ID}")
     if response.status_code == 200:
         assert response.json().get("type") == "dlc"
     else:
         assert response.status_code == 400
 
 def test_get_nx_update():
-    response = client.get(f"/nx/UPDATE/{GAME_ID}")
+    response = client.get(f"/nx/UPDATE/{UPDATE_ID}")
     if response.status_code == 200:
         assert response.json().get("type") == "update"
     else:
