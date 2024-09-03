@@ -15,7 +15,7 @@ def load_config():
         config['domain'] = config.get('domain', 'api.nlib.cc')
         config['app-host'] = config.get('app-host', '0.0.0.0')
         config['app-port'] = config.get('app-port', 80)
-        config['database-path'] = 'tests/test-db' if 'pytest' in sys.modules else config.get('database-path', '/data/NX-DB')
+        config['database-path'] = './tests/test-db' if 'pytest' in sys.modules else config.get('database-path', '/data/NX-DB')
         
         config['limiter-enabled'] = False if 'pytest' in sys.modules else config.get('limiter-enabled', True)
         config['rate-limit'] = config.get('rate-limit', 1)
@@ -126,13 +126,14 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
     
     console, id_type, file_path = find_id_type(tid)
     
-    if not file_path:
-        raise HTTPException(status_code=404, detail=f"TID {tid} not found")
     
     if tid in ['FULL', 'ALL']:
         # Handle full/all JSON file request
         with open(os.path.join(config['database-path'], 'fulldb.json'), 'r') as file:
             return Response(status_code=200, content=file.read())
+        
+    if id_type is None:
+        raise HTTPException(status_code=404, detail=f"TID {tid} not found")
     
     # /nx/base/0100A0D004FB0000
     elif tid in ['BASE', 'DLC', 'UPDATE']:
