@@ -1,8 +1,7 @@
 import pytest
 import warnings
 from fastapi.testclient import TestClient
-from main import app, config
-from time import sleep
+from main import app
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, message="The 'app' shortcut is now deprecated")
 client = TestClient(app)
@@ -80,17 +79,13 @@ def test_get_nx_base():
 
 def test_get_nx_dlc():
     response = client.get(f"/nx/DLC/{DLC_ID}")
-    if response.status_code == 200:
-        assert response.json().get("type") == "dlc"
-    else:
-        assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.json().get("type") == "dlc"
 
 def test_get_nx_update():
     response = client.get(f"/nx/UPDATE/{UPDATE_ID}")
-    if response.status_code == 200:
-        assert response.json().get("type") == "update"
-    else:
-        assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.json().get("type") == "update"
 
 def test_get_unsupported_platform():
     response = client.get(f"/ps5/{GAME_ID}")

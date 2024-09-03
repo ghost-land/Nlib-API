@@ -67,6 +67,7 @@ if config['limiter-enabled']:
 
 @lru_cache(maxsize=128)
 def find_id_type(tid: str):
+    tid = tid.upper()
     base_path = os.path.join(config['database-path'], 'base', f'{tid}.json')
     dlc_path = os.path.join(config['database-path'], 'dlc', f'{tid}.json')
     update_path = os.path.join(config['database-path'], 'update', f'{tid}.json')
