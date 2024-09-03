@@ -135,8 +135,6 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         with open(os.path.join(config['database-path'], 'fulldb.json'), 'r') as file:
             return Response(status_code=200, content=file.read())
         
-    if id_type is None:
-        raise HTTPException(status_code=404, detail=f"TID {tid} not found")
     
     # /nx/base/0100A0D004FB0000
     elif tid in ['BASE', 'DLC', 'UPDATE']:
@@ -144,6 +142,8 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         tid = asset_type
         console, id_type, file_path = find_id_type(tid)
         
+        if id_type is None:
+            raise HTTPException(status_code=404, detail="Item not found")
         if id_type.upper() != type:
             raise HTTPException(status_code=400, detail=f"The requested TID {tid} is not of type {type}")
     
