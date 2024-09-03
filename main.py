@@ -9,6 +9,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from time import time
 from collections import defaultdict
 
+# Change directory to the main.py dir
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 def load_config():
     with open('config.yml', 'r') as config_file:
         config = yaml.safe_load(config_file)
