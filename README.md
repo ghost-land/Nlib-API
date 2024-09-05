@@ -32,12 +32,25 @@ Returns JSON with game information for base games.
 - **Example**:
     ```json
     {
+      "description": "Explore incredible places far from the Mushroom Kingdom as you join Mario and his new ally Cappy on a massive, globe-trotting 3D adventure. Use amazing new abilities—like the power to capture and control objects, animals, and enemies—to collect Power Moons so you can power up the Odyssey airship and save Princess Peach from Bowser’s wedding plans!\n\nThanks to heroic, hat-shaped Cappy, Mario’s got new moves that’ll make you rethink his traditional run-and-jump gameplay—like cap jump, cap throw, and capture. Use captured cohorts such as enemies, objects, and animals to progress through the game and uncover loads of hidden collectibles. And if you feel like playing with a friend, just pass them a Joy-Con™ controller! Player 1 controls Mario while Player 2 controls Cappy. This sandbox-style 3D Mario adventure—the first since 1996’s beloved Super Mario 64™ and 2002’s Nintendo GameCube™ classic Super Mario Sunshine™—is packed with secrets and surprises, plus exciting new kingdoms to explore.",
       "id": "0100000000010000",
       "name": "Super Mario Odyssey™",
       "publisher": "Nintendo",
       "releaseDate": 20171027,
-      "description": "Explore incredible places far from the Mushroom Kingdom as you join Mario and his new ally Cappy on a massive, globe-trotting 3D adventure. Use amazing new abilities—like the power to capture and control objects, animals, and enemies—to collect Power Moons so you can power up the Odyssey airship and save Princess Peach from Bowser’s wedding plans!",
       "version": 0,
+      "category": ["Platformer", "Action"],
+      "developer": null,
+      "intro": "Embark on a cap-tivating, globe-trotting adventure",
+      "isDemo": false,
+      "languages": ["ja", "en", "es", "fr", "de", "it", "nl", "ru", "zh", "zh"],
+      "nsuId": 70010000001130,
+      "numberOfPlayers": 2,
+      "ratingContent": [
+        "Cartoon Violence",
+        "Comic Mischief"
+      ],
+      "region": null,
+      "rightsId": "01000000000100000000000000000003",
       "console": "nx",
       "type": "base"
     }
