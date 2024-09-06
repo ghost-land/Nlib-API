@@ -87,7 +87,7 @@ Returns JSON with game information for updates.
     ```
 
 #### `GET api.nlib.cc/nx/full` or `GET api.nlib.cc/nx/all`
-Returns the full games database JSON. This is not recommended due to the large size of the response.
+Returns the full games database JSON. This is NOT RECOMMENDED due to the large size of the response.
 
 - **Example**:
     ```json
