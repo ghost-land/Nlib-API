@@ -130,13 +130,28 @@ def get_game_screenshot(tid: str, screen_id: int):
     
     return None
 
-@lru_cache(maxsize=128)
+# Custom cache for game icons
+icon_cache = {}
+icon_cache_max_size = 128
 def get_game_icon(tid, size: tuple = (1024, 1024)):
+    cache_key = f"{tid}_{size}"
+    
+    # Check if result is in cache
+    if cache_key in icon_cache:
+        return icon_cache[cache_key]
+    
     icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'icon.jpg')
     if os.path.exists(icon_path):
         with open(icon_path, 'rb') as file:
-            return file.read()
-
+            icon = file.read()
+        
+        # Add result to cache
+        if len(icon_cache) >= icon_cache_max_size:
+            icon_cache.pop(next(iter(icon_cache)))  # Remove oldest item
+        icon_cache[cache_key] = icon
+        
+        return icon
+    
     return None
 
 @lru_cache(maxsize=128)
