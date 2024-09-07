@@ -65,28 +65,47 @@ if config['limiter-enabled']:
     app.add_middleware(RateLimitMiddleware)
 
 
-@lru_cache(maxsize=128)
+# Custom caching system
+cache = {}
+cache_max_size = 128
+
 def find_id_type(tid: str):
     tid = tid.upper()
+    
+    # Check if result is in cache
+    if tid in cache:
+        return cache[tid]
+    
     base_path = os.path.join(config['database-path'], 'base', f'{tid}.json')
     dlc_path = os.path.join(config['database-path'], 'dlc', f'{tid}.json')
     update_path = os.path.join(config['database-path'], 'update', f'{tid}.json')
 
     if os.path.exists(base_path):
-        return 'nx', 'base', base_path
+        result = ('nx', 'base', base_path)
     elif os.path.exists(dlc_path):
-        return 'nx', 'dlc', dlc_path
+        result = ('nx', 'dlc', dlc_path)
     elif os.path.exists(update_path):
-        return 'nx', 'update', update_path
+        result = ('nx', 'update', update_path)
     else:
         retro_path = os.path.join(config['database-path'], 'retro')
         if os.path.exists(retro_path):
             for console in os.listdir(retro_path):
                 console_path = os.path.join(retro_path, console, f'{tid}.json')
                 if os.path.exists(console_path):
-                    return console, 'retro', console_path
-                
-        return None, None, None
+                    result = (console, 'retro', console_path)
+                    break
+            else:
+                result = (None, None, None)
+        else:
+            result = (None, None, None)
+    
+    # Add result to cache
+    if len(cache) >= cache_max_size:
+        cache.pop(next(iter(cache)))  # Remove oldest item
+    if result != (None, None, None):
+        cache[tid] = result
+    
+    return result
 
 @lru_cache(maxsize=128)
 def get_game_screenshot(tid: str, screen_id: 1):
