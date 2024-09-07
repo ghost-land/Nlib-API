@@ -154,13 +154,28 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
     
     return None
 
-@lru_cache(maxsize=128)
+# Custom cache for game banners
+banner_cache = {}
+banner_cache_max_size = 128
 def get_game_banner(tid, size: tuple = (1980, 1080)):
-    icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
-    if os.path.exists(icon_path):
-        with open(icon_path, 'rb') as file:
-            return file.read()
-
+    cache_key = f"{tid}_{size}"
+    
+    # Check if result is in cache
+    if cache_key in banner_cache:
+        return banner_cache[cache_key]
+    
+    banner_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
+    if os.path.exists(banner_path):
+        with open(banner_path, 'rb') as file:
+            banner = file.read()
+        
+        # Add result to cache
+        if len(banner_cache) >= banner_cache_max_size:
+            banner_cache.pop(next(iter(banner_cache)))  # Remove oldest item
+        banner_cache[cache_key] = banner
+        
+        return banner
+    
     return None
 
 
