@@ -68,7 +68,6 @@ if config['limiter-enabled']:
 # Custom caching system
 cache = {}
 cache_max_size = 128
-
 def find_id_type(tid: str):
     tid = tid.upper()
     
@@ -107,13 +106,28 @@ def find_id_type(tid: str):
     
     return result
 
-@lru_cache(maxsize=128)
-def get_game_screenshot(tid: str, screen_id: 1):
+# Custom cache for game screenshots
+screenshot_cache = {}
+screenshot_cache_max_size = 128
+def get_game_screenshot(tid: str, screen_id: int):
+    cache_key = f"{tid}_{screen_id}"
+    
+    # Check if result is in cache
+    if cache_key in screenshot_cache:
+        return screenshot_cache[cache_key]
+    
     screen_path = os.path.join(config['database-path'], 'media', f'{tid}', 'screens', f'screen_{screen_id}.jpg')
     if os.path.exists(screen_path):
         with open(screen_path, 'rb') as file:
-            return file.read()
-            
+            screenshot = file.read()
+        
+        # Add result to cache
+        if len(screenshot_cache) >= screenshot_cache_max_size:
+            screenshot_cache.pop(next(iter(screenshot_cache)))  # Remove oldest item
+        screenshot_cache[cache_key] = screenshot
+        
+        return screenshot
+    
     return None
 
 @lru_cache(maxsize=128)
