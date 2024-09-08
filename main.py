@@ -177,6 +177,23 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
     
     return None
 
+def format_date(date: int) -> str:
+    return f"{date // 10000:04d}-{date % 10000 // 100:02d}-{date % 100:02d}"
+
+def format_json_dates(data: dict) -> dict:
+    date_fields = ['releaseDate', 'base_release_date', 'first_update_release_date', 'latest_update_release_date']
+    
+    for field in date_fields:
+        if field in data:
+            data[field] = format_date(data[field])
+    
+    if 'latest_update' in data and 'release_date' in data['latest_update']:
+        data['latest_update']['release_date'] = format_date(data['latest_update']['release_date'])
+    
+    if 'versions' in data:
+        data['versions'] = {version: format_date(date) for version, date in data['versions'].items()}
+    
+    return data
 
 @app.get('/{platform}/{tid}')
 @app.get('/{platform}/{tid}/{asset_type}')
@@ -214,6 +231,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             content = json.load(file)
             content['console'] = console
             content['type'] = id_type
+            content = format_json_dates(content)
         return JSONResponse(content=content, media_type="application/json")
 
     if id_type:
@@ -264,6 +282,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
                 content = json.load(file)
                 content['console'] = console
                 content['type'] = id_type
+                content = format_json_dates(content)
             return JSONResponse(content=content, media_type="application/json")
     else:
         raise HTTPException(status_code=404, detail="Item not found")
