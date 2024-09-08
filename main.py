@@ -68,15 +68,15 @@ if config['limiter-enabled']:
 cache = {}
 cache_max_size = 128
 def find_id_type(tid: str):
-    tid = str(tid).upper()
+    tid = str(tid)
     
     # Check if result is in cache
     if tid in cache:
         return cache[tid]
     
-    base_path = os.path.join(config['database-path'], 'base', f'{tid}.json')
-    dlc_path = os.path.join(config['database-path'], 'dlc', f'{tid}.json')
-    update_path = os.path.join(config['database-path'], 'update', f'{tid}.json')
+    base_path = os.path.join(config['database-path'], 'base', f'{tid.upper()}.json')
+    dlc_path = os.path.join(config['database-path'], 'dlc', f'{tid.upper()}.json')
+    update_path = os.path.join(config['database-path'], 'update', f'{tid.upper()}.json')
 
     if os.path.exists(base_path):
         result = ('nx', 'base', base_path)
@@ -87,13 +87,23 @@ def find_id_type(tid: str):
     else:
         retro_path = os.path.join(config['database-path'], 'retro')
         if os.path.exists(retro_path):
+            # Try with lowercase tid first for retro
+            tid_lower = tid.lower()
             for console in os.listdir(retro_path):
-                console_path = os.path.join(retro_path, console, f'{tid}.json')
+                console_path = os.path.join(retro_path, console, f'{tid_lower}.json')
                 if os.path.exists(console_path):
                     result = (console, 'retro', console_path)
                     break
             else:
-                result = (None, None, None)
+                # If not found, try with uppercase tid
+                tid_upper = tid.upper()
+                for console in os.listdir(retro_path):
+                    console_path = os.path.join(retro_path, console, f'{tid_upper}.json')
+                    if os.path.exists(console_path):
+                        result = (console, 'retro', console_path)
+                        break
+                else:
+                    result = (None, None, None)
         else:
             result = (None, None, None)
     
@@ -104,7 +114,6 @@ def find_id_type(tid: str):
         cache[tid] = result
     
     return result
-
 # Custom cache for game screenshots
 screenshot_cache = {}
 screenshot_cache_max_size = 128
