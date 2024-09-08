@@ -153,20 +153,20 @@ Returns the full games database JSON. This is NOT RECOMMENDED due to the large s
     {
       "titledb": {
         "0100000000010000": {
-          "id": "0100000000010000",
-          "name": "Super Mario Odyssey™",
-          "publisher": "Nintendo",
-          "releaseDate": 20171027,
-          "description": "Explore incredible places far from the Mushroom Kingdom as you join Mario and his new ally Cappy on a massive, globe-trotting 3D adventure.",
-          "version": 0
+            "id": "0100000000010000",
+            "name": "Super Mario Odyssey™",
+            "publisher": "Nintendo",
+            "releaseDate": 20171027,
+            "description": "Explore incredible places far from the Mushroom Kingdom as you join Mario and his new ally Cappy on a massive, globe-trotting 3D adventure.",
+            "version": 0
         },
         "010000000E5EE000": {
-          "id": "010000000E5EE000",
-          "name": "8-BIT YU-NO'S GREAT ADVENTURE",
-          "publisher": "Spike Chunsoft US",
-          "releaseDate": 20231026,
-          "description": "A 2D platformer in 8-bit style set in the YU-NO universe. Play as Yu-No as she fights and dodges monsters in a fantasy world.",
-          "version": 0
+            "id": "010000000E5EE000",
+            "name": "8-BIT YU-NO'S GREAT ADVENTURE",
+            "publisher": "Spike Chunsoft US",
+            "releaseDate": 20231026,
+            "description": "A 2D platformer in 8-bit style set in the YU-NO universe. Play as Yu-No as she fights and dodges monsters in a fantasy world.",
+            "version": 0
         }
         ...
       }
