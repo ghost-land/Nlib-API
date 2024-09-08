@@ -198,7 +198,7 @@ def format_json_dates(data: dict) -> dict:
 @app.get('/{platform}/{tid}')
 @app.get('/{platform}/{tid}/{asset_type}')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}')
-async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int = 1):
+async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1):
     if platform.lower() not in ['nx', 'switch']:
         raise HTTPException(status_code=404, detail=f"Platform {platform} not supported")
     
@@ -222,6 +222,16 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         type = tid
         tid = asset_type
         console, id_type, file_path = find_id_type(tid)
+        
+        if (console, id_type, file_path) == (None, None, None):
+            asked_console = asset_type.lower()
+            tid = screen_id
+            console, id_type, file_path = find_id_type(tid)
+            if id_type is not None:
+                console = console.lower()
+                if console != asked_console:
+                    raise HTTPException(status_code=400, detail=f"Invalid console or title ID combination. Asked for console: {asked_console}, but title ID is for console: {console}")
+            
         
         if id_type is None:
             raise HTTPException(status_code=404, detail="Item not found")
