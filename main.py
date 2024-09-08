@@ -217,14 +217,15 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         
     
     # /nx/base/0100A0D004FB0000
-    elif tid in ['BASE', 'DLC', 'UPDATE']:
+    # /nx/<type>/<TID>
+    elif tid in ['BASE', 'DLC', 'UPDATE', 'RETRO', 'FORWARDER']:
         type = tid
         tid = asset_type
         console, id_type, file_path = find_id_type(tid)
         
         if id_type is None:
             raise HTTPException(status_code=404, detail="Item not found")
-        if id_type.upper() != type:
+        if id_type.upper() != type.replace('FORWARDER','RETRO'):
             raise HTTPException(status_code=400, detail=f"The requested TID {tid} is not of type {type}")
     
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -233,7 +234,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             content['type'] = id_type
             content = format_json_dates(content)
         return JSONResponse(content=content, media_type="application/json")
-
+    
     if id_type:
         # nx/0100A0D004FB0000/icon
         if asset_type == 'icon':
