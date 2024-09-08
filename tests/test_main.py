@@ -9,6 +9,8 @@ client = TestClient(app)
 GAME_ID = "0100A0D004FB0000"
 DLC_ID = "0100A0C00D847001"
 UPDATE_ID = "0100997014004800"
+FORWARDER_CONSOLE = "3Ds"
+FORWARDER_ID = "0510800001e30000"
 
 def test_uptime():
     response = client.get("/uptime")
@@ -87,10 +89,22 @@ def test_get_nx_update():
     assert response.status_code == 200
     assert response.json().get("type") == "update"
 
-def test_get_unsupported_platform():
-    response = client.get(f"/ps5/{GAME_ID}")
-    assert response.status_code == 404 # notice how there are no games on ps5
+def test_nx_retro_endpoint():
+    response = client.get(f"/nx/retro/{FORWARDER_ID}")
+    assert response.status_code == 200
+    assert response.json().get("type") == "retro"
+    assert response.json().get("console") == "3ds"
+
+def test_nx_forwarder_console_endpoint():
+    response = client.get(f"/nx/forwarder/{FORWARDER_CONSOLE}/{FORWARDER_ID}")
+    assert response.status_code == 200
+    assert response.json().get("type") == "retro"
+    assert response.json().get("console") == "3ds"
 
 def test_get_nonexistent_game():
     response = client.get("/nx/jadeisbetterthanyou")
     assert response.status_code == 404
+
+def test_get_unsupported_platform():
+    response = client.get(f"/ps5/{GAME_ID}")
+    assert response.status_code == 404 # notice how there are no games on ps5
