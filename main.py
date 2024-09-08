@@ -68,7 +68,7 @@ if config['limiter-enabled']:
 cache = {}
 cache_max_size = 128
 def find_id_type(tid: str):
-    tid = tid.upper()
+    tid = str(tid).upper()
     
     # Check if result is in cache
     if tid in cache:
