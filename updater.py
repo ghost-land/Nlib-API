@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 import yaml
 import shutil
@@ -10,6 +11,13 @@ VERSION_FILE = "version.txt"
 # Change directory to the main.py dir
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+def restart_script():
+    if os.path.exists(python):
+        python = sys.executable
+        os.execv(python, [f'"{python}"'] + sys.argv)
+    else:
+        print(f"Error: Python executable not found at {python}. Could not restart API.")
+    
 # Step 1: Read config.yml
 def load_config():
     with open('config.yml', 'r') as file:
@@ -135,6 +143,8 @@ def auto_update():
     if check_build_status(repo, last_commit_sha):
         print(f"Build successful. Updating to {release_tag}.")
         update_to_latest_release(release_tag)
+        if __name__ != "__main__":
+            restart_script()
     else:
         print("Build failed or not successful. Update aborted.")
 
