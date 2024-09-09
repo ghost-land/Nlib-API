@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from time import time
 from collections import defaultdict
+import updater
 
 # Change directory to the main.py dir
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +28,7 @@ def load_config():
         return config
 
 config = load_config()
+DEBUG = False
 
 # Check if 'database-path' is valid and existing
 if 'database-path' not in config or not os.path.exists(config['database-path']):
@@ -329,6 +331,61 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
 @app.head('/uptime')
 def uptime():
     return Response(status_code=200)
+
+
+@app.post('/update-webhook')
+async def update_webhook(request: Request):
+    # Get the JSON payload from the request
+    payload = await request.json()
+    headers = dict(request.headers)
+    
+    # Check if the request is from GitHub
+    if headers.get('user-agent', '').startswith('GitHub-Hookshot'):
+        # Check if the action is a release
+        if payload.get('action') == 'created' and 'release' in payload:
+            updater.auto_update()
+        
+        return JSONResponse(content={"message": "Webhook received and processed successfully"}, status_code=200)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid webhook payload")
+
+
+if DEBUG:
+    @app.post('/webhook-debug')
+    async def webhook(request: Request):
+        # Get the raw request body
+        body = await request.body()
+        
+        # Get all headers
+        headers = dict(request.headers)
+        
+        # Get query parameters
+        query_params = dict(request.query_params)
+        
+        # Get the client's IP address
+        client_ip = request.client.host
+        
+        # Get the HTTP method
+        http_method = request.method
+        
+        # Get the full URL
+        url = str(request.url)
+        
+        # Prepare the response content
+        content = {
+            "method": http_method,
+            "url": url,
+            "client_ip": client_ip,
+            "headers": headers,
+            "query_params": query_params,
+            "body": body.decode('utf-8')  # Decode bytes to string
+        }
+        
+        # Print everything
+        print(json.dumps(content, indent=2))
+        
+        return JSONResponse(content=content)
+
 
 if __name__ == '__main__':
     import uvicorn
