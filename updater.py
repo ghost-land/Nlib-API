@@ -12,8 +12,8 @@ VERSION_FILE = "version.txt"
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def restart_script():
+    python = sys.executable
     if os.path.exists(python):
-        python = sys.executable
         os.execv(python, [f'"{python}"'] + sys.argv)
     else:
         print(f"Error: Python executable not found at {python}. Could not restart API.")
