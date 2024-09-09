@@ -239,7 +239,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
     
     if tid in ['FULL', 'ALL']:
         # Handle full/all JSON file request
-        return Response(status_code=200, content=get_fulldb())
+        return Response(content=get_fulldb(), media_type="application/json")
         
     
     # /nx/base/0100A0D004FB0000
