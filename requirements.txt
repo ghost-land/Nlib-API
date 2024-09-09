@@ -3,3 +3,4 @@ uvicorn
 PyYAML
 pytest
 httpx
+requests
