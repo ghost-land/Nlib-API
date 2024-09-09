@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import yaml
 import json
 from fastapi import FastAPI, Request, Response, HTTPException
@@ -186,6 +187,22 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
     
     return None
 
+fulldb_cache = None
+fulldb_last_modified = 0
+def get_fulldb() -> str:
+    global fulldb_cache, fulldb_last_modified
+    
+    file_path = os.path.join(config['database-path'], 'fulldb.json')
+    current_modified_time = os.path.getmtime(file_path)
+    
+    if fulldb_cache is None or current_modified_time > fulldb_last_modified:
+        with open(file_path, 'r') as file:
+            fulldb_cache = file.read()
+        fulldb_last_modified = current_modified_time
+    
+    return fulldb_cache
+
+
 def format_date(date: int) -> str:
     return f"{date // 10000:04d}-{date % 10000 // 100:02d}-{date % 100:02d}"
 
@@ -204,6 +221,7 @@ def format_json_dates(data: dict) -> dict:
     
     return data
 
+
 @app.get('/{platform}/{tid}')
 @app.get('/{platform}/{tid}/{asset_type}')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}')
@@ -221,8 +239,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
     
     if tid in ['FULL', 'ALL']:
         # Handle full/all JSON file request
-        with open(os.path.join(config['database-path'], 'fulldb.json'), 'r') as file:
-            return Response(status_code=200, content=file.read())
+        return Response(status_code=200, content=get_fulldb())
         
     
     # /nx/base/0100A0D004FB0000
