@@ -2,6 +2,7 @@ domain: 'api.nlib.cc'
 app-host: '0.0.0.0'
 app-port: 80
 database-path: '/data/NX-DB'
+update-source: 'ghost-land/Nlib-API'
 
 limiter-enabled: true
 rate-limit: 5                   # Number of requests
