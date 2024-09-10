@@ -12,17 +12,27 @@ VERSION_FILE = "version.txt"
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def restart_script():
-    python = sys.executable
-    if os.path.exists(python):
-        os.execv(python, [f'"{python}"'] + sys.argv)
-    else:
-        print(f"Error: Python executable not found at {python}. Could not restart API.")
+    authorized_hour = config['update-hour']
+    
+    while True:
+        current_hour = int(time.strftime("%H"))
+        if current_hour == authorized_hour:
+            python = sys.executable
+            if os.path.exists(python):
+                os.execv(python, [f'"{python}"'] + sys.argv)
+            else:
+                print(f"Error: Python executable not found at {python}. Could not restart API.")
+            break
+        else:
+            print(f"Waiting for authorized hour {authorized_hour}:00 to restart. Current hour: {current_hour}:00")
+            time.sleep(60)  # Wait for 1 minute before checking again
     
 # Step 1: Read config.yml
 def load_config():
     with open('config.yml', 'r') as file:
         config = yaml.safe_load(file)
         config['update-source'] = config.get('update-source', 'ghost-land/Nlib-API')
+        config['update-hour'] = config.get('update-hour', 5)
     return config
 
 config = load_config()

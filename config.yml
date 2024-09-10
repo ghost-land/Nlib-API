@@ -3,6 +3,7 @@ app-host: '0.0.0.0'
 app-port: 80
 database-path: '/data/NX-DB'
 update-source: 'ghost-land/Nlib-API'
+update-hour: 5                  # Hour to perform the update (24-hour format)
 
 limiter-enabled: true
 rate-limit: 5                   # Number of requests
