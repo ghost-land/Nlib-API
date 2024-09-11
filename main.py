@@ -206,6 +206,9 @@ def get_fulldb() -> str:
     
     return fulldb_cache
 
+# Load db on startup
+get_fulldb()
+
 
 def format_date(date: int) -> str:
     return f"{date // 10000:04d}-{date % 10000 // 100:02d}-{date % 100:02d}"
