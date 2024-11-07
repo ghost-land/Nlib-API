@@ -144,6 +144,16 @@ def get_game_screenshot(tid: str, screen_id: int):
     
     return None
 
+def get_screenshots(tid: str):
+    screenshots_dir = os.path.join(config['database-path'], 'media', f'{tid}', 'screens')
+    if os.path.exists(screenshots_dir):
+        screenshot_urls = [f"https://{config['domain']}/nx/{tid}/screen/{i+1}" for i in range(len([f for f in os.listdir(screenshots_dir) if f.endswith('.jpg')]))]
+        screenshot_urls.sort()
+        count = len(screenshot_urls)
+        return {"count": count, "screenshots": screenshot_urls}
+    else:
+        return {"count": 0, "screenshots": []}
+                
 # Custom cache for game icons
 icon_cache = {}
 icon_cache_max_size = 128
@@ -276,6 +286,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
             content = json.load(file)
             content['console'] = console
             content['type'] = id_type
+            content['screens'] = get_screenshots(tid)
             content = format_json_dates(content)
         return JSONResponse(content=content, media_type="application/json")
     
@@ -311,14 +322,8 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
         # nx/0100A0D004FB0000/screens
         elif asset_type == 'screens':
             # Handle all screenshots request
-            screenshots_dir = os.path.join(config['database-path'], 'media', f'{tid}', 'screens')
-            if os.path.exists(screenshots_dir):
-                screenshot_urls = [f"https://{config['domain']}/nx/{tid}/screen/{i+1}" for i in range(len([f for f in os.listdir(screenshots_dir) if f.endswith('.jpg')]))]
-                screenshot_urls.sort()
-                count = len(screenshot_urls)
-                return JSONResponse(content={"count": count, "screenshots": screenshot_urls}, media_type="application/json")
-            else:
-                return JSONResponse(content={"count": 0, "screenshots": []}, media_type="application/json")
+            content = get_screenshots(tid)
+            return JSONResponse(content=content, media_type="application/json")
             
         else:
             # Handle original JSON request
@@ -327,6 +332,7 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
                 content = json.load(file)
                 content['console'] = console
                 content['type'] = id_type
+                content['screens'] = get_screenshots(tid)
                 content = format_json_dates(content)
             return JSONResponse(content=content, media_type="application/json")
     else:
