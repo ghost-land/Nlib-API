@@ -37,7 +37,7 @@ if 'database-path' not in config or not os.path.exists(config['database-path']):
     print("Error: 'database-path' is not set or does not exist.")
     sys.exit(1)
 
-app = FastAPI(redirect_slashes=True)
+app = FastAPI(redirect_slashes=False)
 
 # In-memory store for request counts
 request_counts = defaultdict(list)
@@ -240,8 +240,11 @@ def format_json_dates(data: dict) -> dict:
     return data
 
 
+@app.get('/{platform}/{tid}')
 @app.get('/{platform}/{tid}/')
+@app.get('/{platform}/{tid}/{asset_type}')
 @app.get('/{platform}/{tid}/{asset_type}/')
+@app.get('/{platform}/{tid}/{asset_type}/{screen_id}')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}/')
 async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1):
     if platform.lower() not in ['nx', 'switch']:
