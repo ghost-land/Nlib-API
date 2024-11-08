@@ -31,6 +31,7 @@ def test_get_switch_without_asset_type():
     assert response.status_code == 200
     assert response.json().get("console") == "nx"
 
+
 def test_get_nx_icon():
     response = client.get(f"/nx/{GAME_ID}/icon")
     if response.status_code == 200:
@@ -38,12 +39,66 @@ def test_get_nx_icon():
     else:
         assert response.status_code == 404
 
+def test_get_nx_icon_custom_size():
+    response = client.get(f"/nx/{GAME_ID}/icon/512")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '512'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_icon_custom_width_height():
+    response = client.get(f"/nx/{GAME_ID}/icon/512/512")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '512'
+        assert response.headers['content-height'] == '512'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_icon_custom_dimension_512_500():
+    response = client.get(f"/nx/{GAME_ID}/icon/512/500")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '1024'
+        assert response.headers['content-height'] == '1024'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_icon_custom_dimension_1():
+    response = client.get(f"/nx/{GAME_ID}/icon/1")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '1024'
+        assert response.headers['content-height'] == '1024'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_icon_custom_dimension_1_1():
+    response = client.get(f"/nx/{GAME_ID}/icon/1/1")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '8'
+        assert response.headers['content-height'] == '8'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_icon_invalid_size():
+    response = client.get(f"/nx/{GAME_ID}/icon/invalid")
+    assert response.status_code == 422
+
+def test_get_nx_icon_invalid_width_height():
+    response = client.get(f"/nx/{GAME_ID}/icon/512/invalid")
+    assert response.status_code == 422
+
+
 def test_get_nx_banner():
     response = client.get(f"/nx/{GAME_ID}/banner")
     if response.status_code == 200:
         assert response.headers['content-type'] == 'image/jpeg'
     else:
         assert response.status_code == 404
+
 
 def test_get_nx_screen():
     response = client.get(f"/nx/{GAME_ID}/screen")
@@ -65,6 +120,7 @@ def test_get_nx_screens():
     assert "count" in response.json()
     assert "screenshots" in response.json()
 
+
 def test_get_nx_full():
     response = client.get("/nx/full")
     assert response.status_code == 200
@@ -74,6 +130,7 @@ def test_get_nx_full():
 def test_get_nx_all():
     response = client.get("/nx/all")
     assert response.status_code == 200
+
 
 def test_get_nx_base():
     response = client.get(f"/nx/BASE/{GAME_ID}")
