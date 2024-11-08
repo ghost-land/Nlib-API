@@ -99,6 +99,53 @@ def test_get_nx_banner():
     else:
         assert response.status_code == 404
 
+def test_get_nx_banner_custom_size():
+    response = client.get(f"/nx/{GAME_ID}/banner/1280/720")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '1280'
+        assert response.headers['content-height'] == '720'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_banner_720p():
+    response = client.get(f"/nx/{GAME_ID}/banner/720p")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '1280'
+        assert response.headers['content-height'] == '720'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_banner_1080p():
+    response = client.get(f"/nx/{GAME_ID}/banner/1080p")
+    if response.status_code == 200:
+        assert response.headers['content-type'] == 'image/jpeg'
+        assert response.headers['content-width'] == '1920'
+        assert response.headers['content-height'] == '1080'
+    else:
+        assert response.status_code == 404
+
+def test_get_nx_banner_480p():
+    response = client.get(f"/nx/{GAME_ID}/banner/480p")
+    assert response.status_code == 422
+    
+def test_get_nx_banner_invalid_resolution():
+    response = client.get(f"/nx/{GAME_ID}/banner/16/9")
+    assert response.status_code == 422
+    
+def test_get_nx_banner_invalid_ratio():
+    response = client.get(f"/nx/{GAME_ID}/banner/1280/1280")
+    assert response.status_code == 422
+
+def test_get_nx_banner_invalid_size():
+    response = client.get(f"/nx/{GAME_ID}/banner/invalid")
+    assert response.status_code == 422
+
+def test_get_nx_banner_invalid_width_height():
+    response = client.get(f"/nx/{GAME_ID}/banner/1280/invalid")
+    assert response.status_code == 422
+
 
 def test_get_nx_screen():
     response = client.get(f"/nx/{GAME_ID}/screen")
