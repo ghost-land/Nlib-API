@@ -13,9 +13,6 @@ import updater
 # Change directory to the main.py dir
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-if 'GITHUB_ACTIONS' not in os.environ:
-    updater.auto_update(startup=True)
-
 def load_config():
     with open('config.yml', 'r') as config_file:
         config = yaml.safe_load(config_file)
@@ -32,6 +29,10 @@ def load_config():
 
 config = load_config()
 DEBUG = False
+
+# Perform auto-update on startup if not running in GitHub Actions and auto-update is enabled in config
+if 'GITHUB_ACTIONS' not in os.environ and config.get('auto-update-on-startup', False):
+    updater.auto_update(startup=True)
 
 # Check if 'database-path' is valid and existing
 if 'database-path' not in config or not os.path.exists(config['database-path']):
