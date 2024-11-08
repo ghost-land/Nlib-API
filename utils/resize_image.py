@@ -28,7 +28,7 @@ def resize_image(file_path: str, width: int, height: int) -> str:
         aspect_ratio = width / height
         if (width == height and width == nearest_size(width)) or \
            (aspect_ratio == 16/9 and height in [720, 1080]):
-            resized_img = img.resize((width, height))
+            resized_img = img.resize((width, height), Image.NEAREST)
             resized_img.save(new_file_path)
         else:
             return None
