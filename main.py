@@ -351,9 +351,8 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, m
                     width = int(screen_id)
                     height = media_height
             except ValueError:
-                raise HTTPException(status_code=422, detail="Width must be an integer or one of '480p', '720p', '1080p'")
+                raise HTTPException(status_code=422, detail="Width must be an integer or one of '720p' or '1080p'")
             
-            print(width, height)
             if not height:
                 height = 1080  # Default height for banners
             else:
@@ -366,7 +365,6 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, m
             if width == 1:
                 width = 1920  # Default width for banners
 
-            print(width, height)
             if width / height == 16 / 9:
                 content = get_game_banner(tid, size=(width, height))
             else:
@@ -381,7 +379,10 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, m
                 }
                 return Response(content=content, headers=headers)
             else:
-                raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
+                if width != 1920 or height != 1080:
+                    raise HTTPException(status_code=422, detail="Resolution not accepted.")
+                else:
+                    raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
             
         # nx/0100A0D004FB0000/screen
         # nx/0100A0D004FB0000/screen/4
