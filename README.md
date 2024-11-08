@@ -15,9 +15,9 @@ Returns JSON with information based on the provided Title ID (tid). The response
   - **Size**: The `size` field in the response always represents the size in bytes.
 
 - **Examples**:
-  - [Base Game](#get-apinlibccnxtidbase)
+  - [Base Game](#get-apinlibccnxbasetid)
   - [Update](#get-apinlibccnxupdatetid)
-  - [DLC](#get-apinlibccnxdltid)
+  - [DLC](#get-apinlibccnxdlctid)
   - **Retro Game Forwarder**:
     ```json
     {
@@ -172,6 +172,8 @@ Returns the full games database JSON. This is NOT RECOMMENDED due to the large s
       }
     }
     ```
+- **Note**: This endpoint is not updated very often, so the data may not reflect the most recent changes.
+- **Note**: The response size is approximately 54 MB. 
 
 ### Game Assets
 
