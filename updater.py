@@ -131,7 +131,7 @@ def update_to_latest_release(tag_name):
     set_installed_version(tag_name)
 
 # Main updater logic
-def auto_update():
+def auto_update(startup=False):
     repo = config.get('update-source')
 
     # Get the latest release
@@ -153,7 +153,7 @@ def auto_update():
     if check_build_status(repo, last_commit_sha):
         print(f"Build successful. Updating to {release_tag}.")
         update_to_latest_release(release_tag)
-        if __name__ != "__main__":
+        if __name__ != "__main__" and not startup:
             restart_script()
     else:
         print("Build failed or not successful. Update aborted.")

@@ -13,7 +13,7 @@ import updater
 # Change directory to the main.py dir
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-updater.auto_update()
+updater.auto_update(startup=True)
 
 def load_config():
     with open('config.yml', 'r') as config_file:
