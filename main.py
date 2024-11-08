@@ -252,7 +252,7 @@ def format_json_dates(data: dict) -> dict:
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}/')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}/{media_height}')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}/{media_height}/')
-async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int = 1, media_height=None):
+async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, media_height=None):
     if platform.lower() not in ['nx', 'switch']:
         raise HTTPException(status_code=404, detail=f"Platform {platform} not supported")
     
@@ -303,10 +303,16 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
         # nx/0100A0D004FB0000/icon
         if asset_type == 'icon':
             # Handle icon request
-            width = screen_id
+            try:
+                width = int(screen_id)
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Width must be an integer")
             height = media_height
             if height:
-                height = int(height)
+                try:
+                    height = int(height)
+                except ValueError:
+                    raise HTTPException(status_code=422, detail="Height must be an integer")
             
             # Determine the height if not provided
             if width != 1 and not height:
