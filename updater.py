@@ -121,7 +121,11 @@ def update_to_latest_release(tag_name):
                                 yaml.dump(existing_config, merged_file)
                         else:
                             # Overwrite other files
-                            shutil.copy2(extracted_path, dest_path)
+                            try:
+                                shutil.copy2(extracted_path, dest_path)
+                            except PermissionError:
+                                print(f"Permission denied: {dest_path}. Skipping file.")
+                                pass
                     else:
                         shutil.copy2(extracted_path, dest_path)
         

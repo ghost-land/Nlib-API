@@ -175,11 +175,11 @@ Returns the full games database JSON. This is NOT RECOMMENDED due to the large s
 
 ### Game Assets
 
-#### `GET api.nlib.cc/nx/[tid]/icon`
-Returns the game icon (1024x1024 JPEG).
+#### `GET api.nlib.cc/nx/[tid]/icon/[width]/[height]`
+Returns the game icon. If `width` and `height` are not specified, the default size of 1024x1024 JPEG is returned.
 
-#### `GET api.nlib.cc/nx/[tid]/banner`
-Returns the game banner (1980x1080 JPEG).
+#### `GET api.nlib.cc/nx/[tid]/banner/[width]/[height]`
+Returns the game banner. Supported sizes are 1920x1080 and 1280x720. You can also use `/banner/720p` or `/banner/1080p`. If neither `width` nor `height` is specified, the default size of 1920x1080 JPEG is returned.
 
 #### `GET api.nlib.cc/nx/[tid]/screen/[screen_id]`
 Returns a specific screenshot of the game (JPEG). If `screen_id` is not specified, the first screenshot is returned by default.

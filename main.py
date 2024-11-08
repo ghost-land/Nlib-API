@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from time import time
 from collections import defaultdict
+from utils.resize_image import resize_image, nearest_size
 import updater
 
 # Change directory to the main.py dir
@@ -167,6 +168,9 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
         return icon_cache[cache_key]
     
     icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'icon.jpg')
+    icon_path = resize_image(icon_path, *size)
+    if not icon_path:
+        return None
     if os.path.exists(icon_path):
         with open(icon_path, 'rb') as file:
             icon = file.read()
@@ -183,7 +187,7 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
 # Custom cache for game banners
 banner_cache = {}
 banner_cache_max_size = 128
-def get_game_banner(tid, size: tuple = (1980, 1080)):
+def get_game_banner(tid, size: tuple = (1920, 1080)):
     cache_key = f"{tid}_{size}"
     
     # Check if result is in cache
@@ -191,6 +195,9 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
         return banner_cache[cache_key]
     
     banner_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
+    banner_path = resize_image(banner_path, *size)
+    if not banner_path:
+        return None
     if os.path.exists(banner_path):
         with open(banner_path, 'rb') as file:
             banner = file.read()
@@ -248,7 +255,9 @@ def format_json_dates(data: dict) -> dict:
 @app.get('/{platform}/{tid}/{asset_type}/')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}/')
-async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1):
+@app.get('/{platform}/{tid}/{asset_type}/{screen_id}/{media_height}')
+@app.get('/{platform}/{tid}/{asset_type}/{screen_id}/{media_height}/')
+async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, media_height=None):
     if platform.lower() not in ['nx', 'switch']:
         raise HTTPException(status_code=404, detail=f"Platform {platform} not supported")
     
@@ -299,20 +308,85 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
         # nx/0100A0D004FB0000/icon
         if asset_type == 'icon':
             # Handle icon request
-            content = get_game_icon(tid, size=(1024, 1024))
+            try:
+                width = int(screen_id)
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Width must be an integer")
+            height = media_height
+            if height:
+                try:
+                    height = int(height)
+                except ValueError:
+                    raise HTTPException(status_code=422, detail="Height must be an integer")
+            
+            # Determine the height if not provided
+            if width != 1 and not height:
+                height = width
+            if width == 1 and height:
+                height = 1
+            if width != height:
+                width, height = 1024, 1024
+
+            # Ensure width and height are nearest valid sizes
+            width = nearest_size(width)
+            height = nearest_size(height)
+            
+            content = get_game_icon(tid, size=(width, height))
+            
             if content: 
-                return Response(content=content, media_type="image/jpeg")
+                headers = {
+                    "Content-Type": "image/jpeg",
+                    "Content-Width": str(width),
+                    "Content-Height": str(height),
+                    "Content-Disposition": f'inline; filename="icon_{width}x{height}.jpg"'
+                }
+                return Response(content=content, headers=headers)
             else:
                 raise HTTPException(status_code=404, detail=f"Icon for {tid} not found")
             
         # nx/0100A0D004FB0000/banner
         if asset_type == 'banner':
             # Handle banner request
-            content = get_game_banner(tid, size=(1980, 1080))
-            if content: 
-                return Response(content=content, media_type="image/jpeg")
+            try:
+                if screen_id in ["720p", "1080p"]:
+                    width = {"720p": 1280, "1080p": 1920}[screen_id]
+                    height = {"720p": 720, "1080p": 1080}[screen_id]
+                else:
+                    width = int(screen_id)
+                    height = media_height
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Width must be an integer or one of '720p' or '1080p'")
+            
+            if not height:
+                height = 1080  # Default height for banners
             else:
-                raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
+                try:
+                    height = int(height)
+                except ValueError:
+                    raise HTTPException(status_code=422, detail="Height must be an integer")
+            
+            # Ensure both width and height are provided
+            if width == 1:
+                width = 1920  # Default width for banners
+
+            if width / height == 16 / 9:
+                content = get_game_banner(tid, size=(width, height))
+            else:
+                raise HTTPException(status_code=422, detail="Width and height must maintain a 16:9 aspect ratio")
+            
+            if content: 
+                headers = {
+                    "Content-Type": "image/jpeg",
+                    "Content-Width": str(width),
+                    "Content-Height": str(height),
+                    "Content-Disposition": f'inline; filename="banner_{width}x{height}.jpg"'
+                }
+                return Response(content=content, headers=headers)
+            else:
+                if width != 1920 or height != 1080:
+                    raise HTTPException(status_code=422, detail="Resolution not accepted.")
+                else:
+                    raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
             
         # nx/0100A0D004FB0000/screen
         # nx/0100A0D004FB0000/screen/4
