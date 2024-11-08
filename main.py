@@ -169,6 +169,8 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
     
     icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'icon.jpg')
     icon_path = resize_image(icon_path, *size)
+    if not icon_path:
+        return None
     if os.path.exists(icon_path):
         with open(icon_path, 'rb') as file:
             icon = file.read()
@@ -194,6 +196,8 @@ def get_game_banner(tid, size: tuple = (1920, 1080)):
     
     banner_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
     banner_path = resize_image(banner_path, *size)
+    if not banner_path:
+        return None
     if os.path.exists(banner_path):
         with open(banner_path, 'rb') as file:
             banner = file.read()
