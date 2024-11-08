@@ -185,7 +185,7 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
 # Custom cache for game banners
 banner_cache = {}
 banner_cache_max_size = 128
-def get_game_banner(tid, size: tuple = (1980, 1080)):
+def get_game_banner(tid, size: tuple = (1920, 1080)):
     cache_key = f"{tid}_{size}"
     
     # Check if result is in cache
@@ -193,6 +193,7 @@ def get_game_banner(tid, size: tuple = (1980, 1080)):
         return banner_cache[cache_key]
     
     banner_path = os.path.join(config['database-path'], 'media', f'{tid}', 'banner.jpg')
+    banner_path = resize_image(banner_path, *size)
     if os.path.exists(banner_path):
         with open(banner_path, 'rb') as file:
             banner = file.read()
@@ -342,9 +343,43 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, m
         # nx/0100A0D004FB0000/banner
         if asset_type == 'banner':
             # Handle banner request
-            content = get_game_banner(tid, size=(1980, 1080))
+            try:
+                if screen_id in ["720p", "1080p"]:
+                    width = {"720p": 1280, "1080p": 1920}[screen_id]
+                    height = {"720p": 720, "1080p": 1080}[screen_id]
+                else:
+                    width = int(screen_id)
+                    height = media_height
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Width must be an integer or one of '480p', '720p', '1080p'")
+            
+            print(width, height)
+            if not height:
+                height = 1080  # Default height for banners
+            else:
+                try:
+                    height = int(height)
+                except ValueError:
+                    raise HTTPException(status_code=422, detail="Height must be an integer")
+            
+            # Ensure both width and height are provided
+            if width == 1:
+                width = 1920  # Default width for banners
+
+            print(width, height)
+            if width / height == 16 / 9:
+                content = get_game_banner(tid, size=(width, height))
+            else:
+                raise HTTPException(status_code=422, detail="Width and height must maintain a 16:9 aspect ratio")
+            
             if content: 
-                return Response(content=content, media_type="image/jpeg")
+                headers = {
+                    "Content-Type": "image/jpeg",
+                    "Content-Width": str(width),
+                    "Content-Height": str(height),
+                    "Content-Disposition": f'inline; filename="banner_{width}x{height}.jpg"'
+                }
+                return Response(content=content, headers=headers)
             else:
                 raise HTTPException(status_code=404, detail=f"Banner for {tid} not found")
             

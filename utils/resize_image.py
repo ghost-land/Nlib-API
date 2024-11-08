@@ -14,6 +14,10 @@ def resize_image(file_path: str, width: int, height: int) -> str:
     if width == 1024 and height == 1024:
         return file_path
     
+    # Default banner size
+    if width == 1920 and height == 1080:
+        return file_path
+    
     if os.path.exists(new_file_path):
         return new_file_path
     
@@ -21,8 +25,11 @@ def resize_image(file_path: str, width: int, height: int) -> str:
         return None
     
     with Image.open(file_path) as img:
-        resized_img = img.resize((width, height))
-        resized_img.save(new_file_path)
+        aspect_ratio = width / height
+        if (width == height and width == nearest_size(width)) or \
+           (aspect_ratio == 16/9 and height in [720, 1080]):
+            resized_img = img.resize((width, height))
+            resized_img.save(new_file_path)
     
     return new_file_path
 
