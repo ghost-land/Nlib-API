@@ -33,6 +33,7 @@ def load_config():
         config = yaml.safe_load(file)
         config['update-source'] = config.get('update-source', 'ghost-land/Nlib-API')
         config['update-hour'] = config.get('update-hour', 5)
+        config['auto-update-enabled'] = config.get('auto-update-enabled', True)
     return config
 
 config = load_config()
@@ -132,6 +133,9 @@ def update_to_latest_release(tag_name):
 
 # Main updater logic
 def auto_update(startup=False):
+    if config.get('auto-update-enabled', True) is False:
+        return
+    
     repo = config.get('update-source')
 
     # Get the latest release

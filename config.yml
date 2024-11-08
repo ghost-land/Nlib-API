@@ -4,6 +4,7 @@ app-port: 80
 database-path: '/data/NX-DB'
 update-source: 'ghost-land/Nlib-API'
 update-hour: 5                  # Hour to perform the update (24-hour format)
+auto-update-enabled: true       # Enable or disable auto update
 auto-update-on-startup: true   # Enable or disable auto update on startup
 
 limiter-enabled: true
