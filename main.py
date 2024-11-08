@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from time import time
 from collections import defaultdict
+from utils.resize_image import resize_image
 import updater
 
 # Change directory to the main.py dir
@@ -167,6 +168,7 @@ def get_game_icon(tid, size: tuple = (1024, 1024)):
         return icon_cache[cache_key]
     
     icon_path = os.path.join(config['database-path'], 'media', f'{tid}', 'icon.jpg')
+    icon_path = resize_image(icon_path, *size)
     if os.path.exists(icon_path):
         with open(icon_path, 'rb') as file:
             icon = file.read()
@@ -248,7 +250,9 @@ def format_json_dates(data: dict) -> dict:
 @app.get('/{platform}/{tid}/{asset_type}/')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}')
 @app.get('/{platform}/{tid}/{asset_type}/{screen_id}/')
-async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1):
+@app.get('/{platform}/{tid}/{asset_type}/{screen_id}/{media_height}')
+@app.get('/{platform}/{tid}/{asset_type}/{screen_id}/{media_height}/')
+async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int = 1, media_height=None):
     if platform.lower() not in ['nx', 'switch']:
         raise HTTPException(status_code=404, detail=f"Platform {platform} not supported")
     
@@ -299,7 +303,18 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id = 1)
         # nx/0100A0D004FB0000/icon
         if asset_type == 'icon':
             # Handle icon request
-            content = get_game_icon(tid, size=(1024, 1024))
+            width = screen_id
+            height = media_height
+            if height:
+                height = int(height)
+            
+            if width != 1 and not height:
+                height = width
+            if width == 1 and height:
+                height = 1
+            if width != height:
+                width, height = 1024, 1024
+            content = get_game_icon(tid, size=(width, height))
             if content: 
                 return Response(content=content, media_type="image/jpeg")
             else:
