@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from time import time
 from collections import defaultdict
-from utils.resize_image import resize_image
+from utils.resize_image import resize_image, nearest_size
 import updater
 
 # Change directory to the main.py dir
@@ -308,15 +308,28 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id: int
             if height:
                 height = int(height)
             
+            # Determine the height if not provided
             if width != 1 and not height:
                 height = width
             if width == 1 and height:
                 height = 1
             if width != height:
                 width, height = 1024, 1024
+
+            # Ensure width and height are nearest valid sizes
+            width = nearest_size(width)
+            height = nearest_size(height)
+            
             content = get_game_icon(tid, size=(width, height))
+            
             if content: 
-                return Response(content=content, media_type="image/jpeg")
+                headers = {
+                    "Content-Type": "image/jpeg",
+                    "Content-Width": str(width),
+                    "Content-Height": str(height),
+                    "Content-Disposition": f'inline; filename="icon_{width}x{height}.jpg"'
+                }
+                return Response(content=content, headers=headers)
             else:
                 raise HTTPException(status_code=404, detail=f"Icon for {tid} not found")
             

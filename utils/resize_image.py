@@ -2,15 +2,11 @@ from PIL import Image
 import os
 
 
-def resize_image(file_path: str, width: int, height: int) -> str:
+def nearest_size(size):
     allowed_sizes = [8 * (2 ** i) for i in range(8)]  # [8, 16, 32, 64, 128, 256, 512, 1024]
-    
-    def nearest_size(size):
-        return min(allowed_sizes, key=lambda x: abs(x - size))
-    
-    width = nearest_size(width)
-    height = nearest_size(height)
-    
+    return min(allowed_sizes, key=lambda x: abs(x - size))
+
+def resize_image(file_path: str, width: int, height: int) -> str:
     base, ext = os.path.splitext(file_path)
     new_file_path = f"{base}_{width}x{height}{ext}"
     
