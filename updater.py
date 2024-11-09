@@ -123,8 +123,8 @@ def update_to_latest_release(tag_name):
                             # Overwrite other files
                             try:
                                 shutil.copy2(extracted_path, dest_path)
-                            except PermissionError:
-                                print(f"Permission denied: {dest_path}. Skipping file.")
+                            except (PermissionError, IsADirectoryError) as e:
+                                print(f"Error: {e}. Skipping file: {dest_path}.")
                                 pass
                     else:
                         shutil.copy2(extracted_path, dest_path)
