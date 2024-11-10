@@ -173,7 +173,10 @@ Returns the full games database JSON. This is NOT RECOMMENDED due to the large s
     }
     ```
 - **Note**: This endpoint is not updated very often, so the data may not reflect the most recent changes.
-- **Note**: The response size is approximately 54 MB. 
+- **Note**: The response size is more than 50 MB. 
+
+#### `GET api.nlib.cc/nx/full/download` or `GET api.nlib.cc/nx/all/download`
+Returns the full games database JSON as a downloadable file.
 
 ### Game Assets
 
