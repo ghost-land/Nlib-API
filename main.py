@@ -271,6 +271,10 @@ async def get_nx(platform: str, tid: str, asset_type: str = None, screen_id=1, m
     
     if tid in ['FULL', 'ALL']:
         # Handle full/all JSON file request
+        if asset_type == 'download':
+            return Response(content=get_fulldb(), media_type="application/octet-stream", headers={
+                "Content-Disposition": f'attachment; filename="fulldb.json"'
+            })
         return Response(content=get_fulldb(), media_type="application/json")
         
     
