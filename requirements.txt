@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-PyYAML
-pytest
-httpx
-requests
-pillow

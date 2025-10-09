@@ -1,9 +1,5 @@
-# Python
-__pycache__/
-.pytest_cache/
+node_modules/
+*.log
+.env
+.DS_Store
 
-# Virtual Environment
-.venv
-
-# Version file
-version.txt

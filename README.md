@@ -1,6 +1,5 @@
-# NX API Documentation
+# NLib API
 
-This document provides an overview of the endpoints available in the NX API, which returns game-related data in JSON format.
 
 ## Endpoints
 
@@ -18,18 +17,6 @@ Returns JSON with information based on the provided Title ID (tid). The response
   - [Base Game](#get-apinlibccnxbasetid)
   - [Update](#get-apinlibccnxupdatetid)
   - [DLC](#get-apinlibccnxdlctid)
-  - **Retro Game Forwarder**:
-    ```json
-    {
-      "id": "0512200000a10000",
-      "name": "Hot Wheels Turbo Racing [N64]",
-      "size": 22242936,
-      "releaseDate": "1999-05-11",
-      "description": "Hot Wheels Turbo Racing is a racing video game released for the Nintendo 64 and PlayStation in 1999. It features 40 cars based on the Hot Wheels series of toys. It also features Kyle Petty's 1999 NASCAR stock car, as it was sponsored by Hot Wheels. The game features music from artists like Primus, Metallica, The Reverend Horton Heat and Mix Master Mike.",
-      "console": "n64",
-      "type": "retro"
-    }
-    ```
 
 #### `GET api.nlib.cc/nx/base/[tid]`
 Returns JSON with game information for base games.
