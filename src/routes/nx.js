@@ -1,9 +1,102 @@
 import { Hono } from 'hono'
 import { getGameByTID, getGamesCount, getLastSync, syncNXGames } from '../services/nxSync.js'
 import { syncTitleDB } from '../services/titledbSync.js'
+import { getIconPath, getBannerPath, getScreenshotPath, getAllScreenshots } from '../services/media.js'
 import db from '../database/init.js'
+import { readFileSync } from 'fs'
 
 const nx = new Hono()
+
+// Media endpoints (must be before /:tid to avoid conflicts)
+
+// Get icon
+nx.get('/:tid/icon', (c) => {
+  try {
+    const tid = c.req.param('tid').toUpperCase()
+    const iconPath = getIconPath(tid)
+    
+    if (!iconPath) {
+      return c.json({ success: false, error: 'Icon not found' }, 404)
+    }
+    
+    const image = readFileSync(iconPath)
+    return c.body(image, 200, {
+      'Content-Type': 'image/jpeg'
+    })
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// Get banner
+nx.get('/:tid/banner', (c) => {
+  try {
+    const tid = c.req.param('tid').toUpperCase()
+    const bannerPath = getBannerPath(tid)
+    
+    if (!bannerPath) {
+      return c.json({ success: false, error: 'Banner not found' }, 404)
+    }
+    
+    const image = readFileSync(bannerPath)
+    return c.body(image, 200, {
+      'Content-Type': 'image/jpeg'
+    })
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// Get screenshot by index
+nx.get('/:tid/screen/:index', (c) => {
+  try {
+    const tid = c.req.param('tid').toUpperCase()
+    const index = parseInt(c.req.param('index'), 10)
+    
+    if (isNaN(index) || index < 1) {
+      return c.json({ success: false, error: 'Invalid screen index' }, 400)
+    }
+    
+    const screenPath = getScreenshotPath(tid, index)
+    
+    if (!screenPath) {
+      return c.json({ success: false, error: 'Screenshot not found' }, 404)
+    }
+    
+    const image = readFileSync(screenPath)
+    return c.body(image, 200, {
+      'Content-Type': 'image/jpeg'
+    })
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// Get all screenshots list
+nx.get('/:tid/screens', (c) => {
+  try {
+    const tid = c.req.param('tid').toUpperCase()
+    const screenshots = getAllScreenshots(tid)
+    
+    if (screenshots.length === 0) {
+      return c.json({
+        count: 0,
+        screenshots: []
+      })
+    }
+    
+    // Build URLs for each screenshot
+    const baseUrl = `https://api.nlib.cc/nx/${tid}/screen`
+    const screenshotUrls = screenshots.map(index => `${baseUrl}/${index}`)
+    
+    return c.json({
+      count: screenshots.length,
+      screenshots: screenshotUrls
+    })
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
 
 // Get game by TID
 nx.get('/:tid', (c) => {

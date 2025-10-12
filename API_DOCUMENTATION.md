@@ -59,6 +59,87 @@ GET /nx/01007EF00011E000?lang=fr
 }
 ```
 
+#### Get icon
+```
+GET /nx/:tid/icon
+```
+
+**Example:**
+```
+GET /nx/01007EF00011E000/icon
+```
+
+**Response:** JPEG image file
+
+---
+
+#### Get banner
+```
+GET /nx/:tid/banner
+```
+
+**Example:**
+```
+GET /nx/01007EF00011E000/banner
+```
+
+**Response:** JPEG image file
+
+---
+
+#### Get screenshot
+```
+GET /nx/:tid/screen/:index
+```
+
+**Parameters:**
+- `index` - Screenshot index (1-based, integer)
+
+**Example:**
+```
+GET /nx/01007EF00011E000/screen/1
+GET /nx/01007EF00011E000/screen/3
+```
+
+**Response:** JPEG image file
+
+---
+
+#### Get all screenshots list
+```
+GET /nx/:tid/screens
+```
+
+**Example:**
+```
+GET /nx/0100F52019002000/screens
+```
+
+**Response:**
+```json
+{
+  "count": 6,
+  "screenshots": [
+    "https://api.nlib.cc/nx/0100F52019002000/screen/1",
+    "https://api.nlib.cc/nx/0100F52019002000/screen/2",
+    "https://api.nlib.cc/nx/0100F52019002000/screen/3",
+    "https://api.nlib.cc/nx/0100F52019002000/screen/4",
+    "https://api.nlib.cc/nx/0100F52019002000/screen/5",
+    "https://api.nlib.cc/nx/0100F52019002000/screen/6"
+  ]
+}
+```
+
+**Response (no screenshots):**
+```json
+{
+  "count": 0,
+  "screenshots": []
+}
+```
+
+---
+
 #### Get statistics
 ```
 GET /nx/stats

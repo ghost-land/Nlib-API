@@ -1,4 +1,5 @@
 import db from '../database/init.js'
+import { downloadGameMedia } from './mediaDownloader.js'
 
 const TITLEDB_BASE_URL = 'https://raw.githubusercontent.com/blawar/titledb/refs/heads/master'
 
@@ -107,7 +108,7 @@ async function downloadTitleDB(source) {
  * @param {Object} titledb - Full titledb object
  * @param {string} lang - Language code (en, ja, es, etc.)
  */
-function processTitleDBInBatches(titledb, lang) {
+async function processTitleDBInBatches(titledb, lang) {
   const BATCH_SIZE = 1000
   const entries = Object.entries(titledb)
   const totalEntries = entries.length
@@ -116,6 +117,7 @@ function processTitleDBInBatches(titledb, lang) {
   let added = 0
   let updated = 0
   let skipped = 0
+  let mediaDownloaded = 0
   const skippedExamples = [] // Store varied examples
   const MAX_EXAMPLES = 10
   
@@ -160,6 +162,9 @@ function processTitleDBInBatches(titledb, lang) {
     
     console.log(`Processing batch ${batchNum}/${totalBatches} (${batch.length} entries)`)
     
+    // Collect games that might need media download (only for English to avoid duplicates)
+    const gamesForMedia = []
+    
     const processBatch = db.transaction(() => {
       for (const [nsuId, gameData] of batch) {
         const tid = gameData.id
@@ -185,6 +190,11 @@ function processTitleDBInBatches(titledb, lang) {
           updated++
         } else {
           added++
+        }
+        
+        // Collect game for media download check (only for English source)
+        if (lang === 'en' && gameData.iconUrl) {
+          gamesForMedia.push({ tid, gameData })
         }
         
         // Insert/update game data
@@ -219,9 +229,28 @@ function processTitleDBInBatches(titledb, lang) {
     })
     
     processBatch()
+    
+    // Download missing media (outside transaction, async)
+    // Only for English sources to avoid downloading duplicates
+    if (gamesForMedia.length > 0 && lang === 'en') {
+      console.log(`  Checking media for ${gamesForMedia.length} games...`)
+      
+      for (const { tid, gameData } of gamesForMedia) {
+        // downloadGameMedia already checks if files exist before downloading
+        const result = await downloadGameMedia(tid, gameData)
+        // Count as downloaded if we got at least one media file
+        if (result.icon || result.banner || result.screenshots > 0) {
+          mediaDownloaded++
+        }
+      }
+      
+      if (mediaDownloaded > 0) {
+        console.log(`  ✓ Downloaded media for ${mediaDownloaded} games`)
+      }
+    }
   }
   
-  return { processed, added, updated, skipped, skippedExamples }
+  return { processed, added, updated, skipped, mediaDownloaded, skippedExamples }
 }
 
 /**
@@ -237,6 +266,7 @@ export async function syncTitleDB() {
     let totalAdded = 0
     let totalUpdated = 0
     let totalSkipped = 0
+    let totalMediaDownloaded = 0
     const allSkippedExamples = []
     
     // Group sources by language for better logging
@@ -260,12 +290,13 @@ export async function syncTitleDB() {
       }
       
       console.log('Processing entries...')
-      const result = processTitleDBInBatches(titledb, source.lang)
+      const result = await processTitleDBInBatches(titledb, source.lang)
       
       totalProcessed += result.processed
       totalAdded += result.added
       totalUpdated += result.updated
       totalSkipped += result.skipped
+      totalMediaDownloaded += result.mediaDownloaded || 0
       
       if (result.skippedExamples && result.skippedExamples.length > 0 && allSkippedExamples.length < 10) {
         allSkippedExamples.push(...result.skippedExamples.slice(0, 10 - allSkippedExamples.length))
@@ -281,6 +312,7 @@ export async function syncTitleDB() {
     console.log(`  - New: ${totalAdded}`)
     console.log(`  - Updated: ${totalUpdated}`)
     console.log(`  - Skipped: ${totalSkipped}`)
+    console.log(`  - Media downloaded: ${totalMediaDownloaded} games`)
     
     if (allSkippedExamples.length > 0) {
       console.log('Skipped examples:')
@@ -302,6 +334,7 @@ export async function syncTitleDB() {
       added: totalAdded,
       updated: totalUpdated,
       skipped: totalSkipped,
+      mediaDownloaded: totalMediaDownloaded,
       skippedExamples: allSkippedExamples,
       duration: Date.now() - overallStart
     }
