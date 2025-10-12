@@ -101,14 +101,89 @@ nx.get('/:tid/screens', (c) => {
 // Get stats (must be before /:tid to avoid conflicts)
 nx.get('/stats', (c) => {
   try {
-    const count = getGamesCount()
+    // Total games count
+    const totalGames = getGamesCount()
     const lastSync = getLastSync()
+    
+    // Games by type
+    const typeStats = db.prepare(`
+      SELECT type, COUNT(*) as count
+      FROM games
+      GROUP BY type
+    `).all()
+    
+    // Games vs Demos
+    const demoStats = db.prepare(`
+      SELECT 
+        SUM(CASE WHEN is_demo = 1 THEN 1 ELSE 0 END) as demos,
+        SUM(CASE WHEN is_demo = 0 THEN 1 ELSE 0 END) as games
+      FROM games
+    `).get()
+    
+    // Games by region
+    const regionStats = db.prepare(`
+      SELECT region, COUNT(*) as count
+      FROM games
+      WHERE region IS NOT NULL
+      GROUP BY region
+      ORDER BY count DESC
+    `).all()
+    
+    // Games by console
+    const consoleStats = db.prepare(`
+      SELECT console, COUNT(*) as count
+      FROM games
+      GROUP BY console
+    `).all()
+    
+    // Top 10 publishers
+    const topPublishers = db.prepare(`
+      SELECT publisher, COUNT(*) as count
+      FROM games
+      WHERE publisher IS NOT NULL AND publisher != ''
+      GROUP BY publisher
+      ORDER BY count DESC
+      LIMIT 10
+    `).all()
+    
+    // Most recent games added/updated
+    const recentGames = db.prepare(`
+      SELECT tid, name, updated_at
+      FROM games
+      ORDER BY updated_at DESC
+      LIMIT 5
+    `).all()
     
     return c.json({
       success: true,
       data: {
-        total_games: count,
-        last_sync: lastSync
+        total_games: totalGames,
+        last_sync: lastSync,
+        by_type: typeStats.reduce((acc, row) => {
+          acc[row.type] = row.count
+          return acc
+        }, {}),
+        games_vs_demos: {
+          games: demoStats.games || 0,
+          demos: demoStats.demos || 0
+        },
+        by_region: regionStats.reduce((acc, row) => {
+          acc[row.region] = row.count
+          return acc
+        }, {}),
+        by_console: consoleStats.reduce((acc, row) => {
+          acc[row.console] = row.count
+          return acc
+        }, {}),
+        top_publishers: topPublishers.map(p => ({
+          name: p.publisher,
+          games_count: p.count
+        })),
+        recent_updates: recentGames.map(g => ({
+          tid: g.tid,
+          name: g.name,
+          updated_at: g.updated_at
+        }))
       }
     })
   } catch (error) {
