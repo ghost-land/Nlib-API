@@ -17,9 +17,10 @@ const version = packageJson.version
 
 const app = new Hono({ strict: false })
 
-// Serve static files (CSS, JS)
+// Serve static files (CSS, JS, Images)
 app.use('/css/*', serveStatic({ root: './src/public' }))
 app.use('/js/*', serveStatic({ root: './src/public' }))
+app.use('/img/*', serveStatic({ root: './src/public' }))
 
 // Home page
 app.get('/', (c) => {
