@@ -22,13 +22,74 @@ app.use('/css/*', serveStatic({ root: './src/public' }))
 app.use('/js/*', serveStatic({ root: './src/public' }))
 app.use('/img/*', serveStatic({ root: './src/public' }))
 
+// SEO files - generated dynamically
+app.get('/robots.txt', (c) => {
+  const url = new URL(c.req.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  
+  const robotsTxt = `# Robots.txt for Nlib API
+User-agent: *
+Allow: /
+Allow: /nx/
+Allow: /uptime
+
+# Sitemap location
+Sitemap: ${baseUrl}/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+`
+  
+  return c.text(robotsTxt, 200, {
+    'Content-Type': 'text/plain'
+  })
+})
+
+app.get('/sitemap.xml', (c) => {
+  const url = new URL(c.req.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  const today = new Date().toISOString().split('T')[0]
+  
+  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/nx/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/uptime</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>
+`
+  
+  return c.text(sitemapXml, 200, {
+    'Content-Type': 'application/xml'
+  })
+})
+
 // Home page
 app.get('/', (c) => {
   const htmlPath = join(__dirname, 'views', 'home.html')
   let html = readFileSync(htmlPath, 'utf-8')
   
-  // Replace version placeholder with actual version from package.json
-  html = html.replace('{{VERSION}}', version)
+  // Get base URL from request
+  const url = new URL(c.req.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  
+  // Replace placeholders
+  html = html.replace(/{{VERSION}}/g, version)
+  html = html.replace(/{{BASE_URL}}/g, baseUrl)
   
   return c.html(html)
 })

@@ -16,10 +16,17 @@ nx.get('/', (c) => {
   const htmlPath = join(__dirname, '..', 'views', 'nx.html')
   let html = readFileSync(htmlPath, 'utf-8')
   
+  // Get base URL from request
+  const url = new URL(c.req.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  
   // Replace version placeholder
   const packageJsonPath = join(__dirname, '..', '..', 'package.json')
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
-  html = html.replace('{{VERSION}}', packageJson.version)
+  
+  // Replace placeholders
+  html = html.replace(/{{VERSION}}/g, packageJson.version)
+  html = html.replace(/{{BASE_URL}}/g, baseUrl)
   
   return c.html(html)
 })

@@ -3,9 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
   <title>Nintendo Switch API Documentation - Nlib API</title>
+  <meta name="title" content="Nintendo Switch API Documentation - Nlib API">
+  <meta name="description" content="Complete API documentation for Nlib Nintendo Switch API. Learn how to access game data, retrieve icons, banners, screenshots, and statistics with our REST API endpoints.">
+  <meta name="keywords" content="Nintendo Switch API, API documentation, REST API docs, Switch game data, Nintendo API endpoints, game metadata API, TitleDB API, Switch library API">
+  <meta name="author" content="Nlib API">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{BASE_URL}}/nx/">
+  <meta property="og:title" content="Nintendo Switch API Documentation - Nlib API">
+  <meta property="og:description" content="Complete API documentation for Nlib Nintendo Switch API. Learn how to access game data, retrieve icons, banners, screenshots, and statistics with our REST API endpoints.">
+  <meta property="og:site_name" content="Nlib API">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="{{BASE_URL}}/nx/">
+  <meta property="twitter:title" content="Nintendo Switch API Documentation - Nlib API">
+  <meta property="twitter:description" content="Complete API documentation for Nlib Nintendo Switch API. Learn how to access game data, retrieve icons, banners, screenshots, and statistics with our REST API endpoints.">
+  
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  
+  <!-- Canonical -->
+  <link rel="canonical" href="{{BASE_URL}}/nx/">
+  
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="/css/nx.css">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Nintendo Switch API Documentation",
+    "description": "Complete API documentation for Nlib Nintendo Switch API with endpoints for game data, statistics, and media assets",
+    "url": "{{BASE_URL}}/nx/",
+    "author": {
+      "@type": "Organization",
+      "name": "Nlib API"
+    },
+    "about": {
+      "@type": "WebAPI",
+      "name": "Nlib Nintendo Switch API",
+      "description": "REST API for Nintendo Switch game library data"
+    },
+    "articleSection": "API Documentation",
+    "keywords": "Nintendo Switch API, REST API, API documentation, game data, Nintendo Switch"
+  }
+  </script>
 </head>
 <body>
   <div class="background-particles">
@@ -19,12 +68,12 @@
     <div class="particle"></div>
   </div>
 
-  <div class="container">
-    <div class="header">
-      <a href="/" class="back-button">← Back</a>
+  <main class="container">
+    <header class="header">
+      <a href="/" class="back-button" aria-label="Back to home page">← Back</a>
       <h1 class="title">Nintendo Switch API</h1>
       <p class="subtitle">API Documentation</p>
-    </div>
+    </header>
 
     <div class="doc-container">
       <!-- Table of Contents -->
@@ -246,11 +295,11 @@
         </div>
       </section>
     </div>
-  </div>
+  </main>
 
-  <div class="footer">
+  <footer class="footer">
     Nlib API v{{VERSION}} • GPL-3.0
-  </div>
+  </footer>
 </body>
 </html>
 

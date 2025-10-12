@@ -3,9 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
   <title>Nlib API - Nintendo Library API</title>
+  <meta name="title" content="Nlib API - Nintendo Library API">
+  <meta name="description" content="A modern and performant REST API for Nintendo game library data. Access game information, media assets, screenshots, and comprehensive statistics across Nintendo platforms.">
+  <meta name="keywords" content="Nintendo API, REST API, Nintendo games, game library, Nintendo database, TitleDB, game metadata, Nintendo Switch, gaming API">
+  <meta name="author" content="Nlib API">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{BASE_URL}}/">
+  <meta property="og:title" content="Nlib API - Nintendo Library API">
+  <meta property="og:description" content="A modern and performant REST API for Nintendo game library data. Access game information, media assets, screenshots, and comprehensive statistics across Nintendo platforms.">
+  <meta property="og:site_name" content="Nlib API">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="{{BASE_URL}}/">
+  <meta property="twitter:title" content="Nlib API - Nintendo Library API">
+  <meta property="twitter:description" content="A modern and performant REST API for Nintendo game library data. Access game information, media assets, screenshots, and comprehensive statistics across Nintendo platforms.">
+  
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  
+  <!-- Canonical -->
+  <link rel="canonical" href="{{BASE_URL}}/">
+  
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="/css/home.css">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebAPI",
+    "name": "Nlib API",
+    "description": "A modern and performant REST API for Nintendo game library data across multiple platforms",
+    "url": "{{BASE_URL}}",
+    "documentation": "{{BASE_URL}}/nx/",
+    "provider": {
+      "@type": "Organization",
+      "name": "Nlib API"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
 </head>
 <body>
   <div class="background-particles">
@@ -19,7 +67,7 @@
     <div class="particle"></div>
   </div>
 
-  <div class="container">
+  <main class="container">
     <div class="cube-scene">
       <div class="cube">
         <div class="cube-face front">N</div>
@@ -31,27 +79,29 @@
       </div>
     </div>
 
-    <h1 class="title">Nlib API</h1>
-    <p class="subtitle">Nintendo Library API</p>
-    <p class="description">
-      A modern and performant API for your Nintendo Library needs
-    </p>
+    <header>
+      <h1 class="title">Nlib API</h1>
+      <p class="subtitle">Nintendo Library API</p>
+      <p class="description">
+        A modern and performant API for your Nintendo Library needs
+      </p>
+    </header>
 
-    <div class="links">
-      <a href="/nx/" class="link">
-        <span>🎮</span>
+    <nav class="links" aria-label="Main navigation">
+      <a href="/nx/" class="link" aria-label="Nintendo Switch API Documentation">
+        <span aria-hidden="true">🎮</span>
         <span>Nintendo Switch</span>
       </a>
-      <a href="/uptime" class="link">
-        <span>📊</span>
+      <a href="/uptime" class="link" aria-label="API Uptime Status">
+        <span aria-hidden="true">📊</span>
         <span>Uptime</span>
       </a>
-    </div>
-  </div>
+    </nav>
+  </main>
 
-  <div class="footer">
+  <footer class="footer">
     Nlib API v{{VERSION}} • GPL-3.0
-  </div>
+  </footer>
 
   <script src="/js/home.js"></script>
 </body>
