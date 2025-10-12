@@ -85,8 +85,9 @@ nx.get('/:tid/screens', (c) => {
       })
     }
     
-    // Build URLs for each screenshot
-    const baseUrl = `https://api.nlib.cc/nx/${tid}/screen`
+    // Build URLs for each screenshot based on current domain
+    const url = new URL(c.req.url)
+    const baseUrl = `${url.protocol}//${url.host}/nx/${tid}/screen`
     const screenshotUrls = screenshots.map(index => `${baseUrl}/${index}`)
     
     return c.json({
