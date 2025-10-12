@@ -15,7 +15,7 @@ const __dirname = dirname(__filename)
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'))
 const version = packageJson.version
 
-const app = new Hono()
+const app = new Hono({ strict: false })
 
 // Serve static files (CSS, JS)
 app.use('/css/*', serveStatic({ root: './src/public' }))
