@@ -3,8 +3,26 @@ import { getGameByTID, getGamesCount, getLastSync } from '../services/nxSync.js'
 import { getIconPath, getBannerPath, getScreenshotPath, getAllScreenshots } from '../services/media.js'
 import db from '../database/init.js'
 import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const nx = new Hono()
+
+// Home page for Nintendo Switch stats
+nx.get('/', (c) => {
+  const htmlPath = join(__dirname, '..', 'views', 'nx.html')
+  let html = readFileSync(htmlPath, 'utf-8')
+  
+  // Replace version placeholder
+  const packageJsonPath = join(__dirname, '..', '..', 'package.json')
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+  html = html.replace('{{VERSION}}', packageJson.version)
+  
+  return c.html(html)
+})
 
 // Media endpoints (must be before /:tid to avoid conflicts)
 

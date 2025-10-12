@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nintendo Switch API Documentation - Nlib API</title>
+  <link rel="stylesheet" href="/css/nx.css">
+</head>
+<body>
+  <div class="background-particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="/" class="back-button">← Back</a>
+      <h1 class="title">Nintendo Switch API</h1>
+      <p class="subtitle">API Documentation</p>
+    </div>
+
+    <div class="doc-container">
+      <!-- Table of Contents -->
+      <nav class="toc">
+        <h2 class="toc-title">Quick Navigation</h2>
+        <div class="toc-grid">
+          <a href="#stats" class="toc-link">Statistics</a>
+          <a href="#game" class="toc-link">Game Data</a>
+          <a href="#media" class="toc-link">Media Assets</a>
+          <a href="#info" class="toc-link">Information</a>
+        </div>
+      </nav>
+
+      <!-- Statistics Endpoint -->
+      <section id="stats" class="doc-category">
+        <h2 class="category-title">📊 Statistics</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/stats</code>
+          </div>
+          <p class="doc-description">Retrieve comprehensive statistics about the Nintendo Switch game library.</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "success": true,
+  "data": {
+    "total_games": 15420,
+    "last_sync": "2025-10-12T10:30:00Z",
+    "by_type": { "base": 12000, "update": 2500, "dlc": 920 },
+    "games_vs_demos": { "games": 14800, "demos": 620 },
+    "by_region": { "US": 8500, "EU": 4200, "JP": 2720 },
+    "by_console": { "nx": 15420 },
+    "top_publishers": [
+      { "name": "Nintendo", "games_count": 450 }
+    ],
+    "recent_updates": [
+      { "tid": "0100ABC001234000", "name": "Example Game", "updated_at": "..." }
+    ]
+  }
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Data Endpoints -->
+      <section id="game" class="doc-category">
+        <h2 class="category-title">🎮 Game Data</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/:tid</code>
+          </div>
+          <p class="doc-description">Get detailed information about a game by its Title ID.</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
+              <li><code>lang</code> <span class="param-type">query</span> <span class="optional">optional</span> - Language code for descriptions (en, fr, ja, es, de, nl, pt, it, zh, ko, ru). Default: <code>en</code></li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Request</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000?lang=en</pre>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Response</h3>
+            <pre class="code-block">{
+  "id": "0100ABC001234000",
+  "name": "The Legend of Zelda: Breath of the Wild",
+  "description": "Full game description...",
+  "intro": "Brief summary...",
+  "publisher": "Nintendo",
+  "developer": "Nintendo EPD",
+  "releaseDate": "2017-03-03",
+  "version": 196608,
+  "category": ["Adventure", "Action"],
+  "languages": ["en", "fr", "es", "de", "it"],
+  "nsuId": 70010000000025,
+  "numberOfPlayers": 1,
+  "ratingContent": ["Violence"],
+  "region": "US",
+  "rightsId": "0100ABC00123400000000000000000AB",
+  "isDemo": false,
+  "console": "nx",
+  "type": "base"
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Media Assets Endpoints -->
+      <section id="media" class="doc-category">
+        <h2 class="category-title">🖼️ Media Assets</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/:tid/icon</code>
+          </div>
+          <p class="doc-description">Retrieve the game icon (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Example</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000/icon</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code></p>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/:tid/banner</code>
+          </div>
+          <p class="doc-description">Retrieve the game banner (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Example</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000/banner</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code></p>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/:tid/screens</code>
+          </div>
+          <p class="doc-description">List all available screenshots for a game.</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "count": 8,
+  "screenshots": [
+    "https://api.nlib.cc/nx/0100ABC001234000/screen/1",
+    "https://api.nlib.cc/nx/0100ABC001234000/screen/2",
+    "https://api.nlib.cc/nx/0100ABC001234000/screen/3"
+  ]
+}</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <p class="note">Screenshot URLs are dynamically generated based on the API domain.</p>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/:tid/screen/:index</code>
+          </div>
+          <p class="doc-description">Retrieve a specific screenshot by index (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>index</code> <span class="param-type">path</span> <span class="required">required</span> - Screenshot index (starts at 1)</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000/screen/1</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Information Section -->
+      <section id="info" class="doc-category">
+        <h2 class="category-title">ℹ️ Information</h2>
+
+        <div class="doc-section info">
+          <h3 class="info-title">📝 Important Notes</h3>
+          <ul class="info-list">
+            <li>All Title IDs are automatically converted to uppercase</li>
+            <li>Endpoints can be called with or without a trailing slash</li>
+            <li>All images are served in JPEG format</li>
+            <li>Screenshot URLs are generated dynamically based on the API domain</li>
+            <li>Database is automatically synchronized with TitleDB</li>
+            <li>API responses use standard HTTP status codes (200, 404, 500)</li>
+          </ul>
+        </div>
+
+        <div class="doc-section info">
+          <h3 class="info-title">🌍 Supported Languages</h3>
+          <div class="lang-grid">
+            <span class="lang-tag">en <span class="lang-name">English</span></span>
+            <span class="lang-tag">fr <span class="lang-name">French</span></span>
+            <span class="lang-tag">ja <span class="lang-name">Japanese</span></span>
+            <span class="lang-tag">es <span class="lang-name">Spanish</span></span>
+            <span class="lang-tag">de <span class="lang-name">German</span></span>
+            <span class="lang-tag">nl <span class="lang-name">Dutch</span></span>
+            <span class="lang-tag">pt <span class="lang-name">Portuguese</span></span>
+            <span class="lang-tag">it <span class="lang-name">Italian</span></span>
+            <span class="lang-tag">zh <span class="lang-name">Chinese</span></span>
+            <span class="lang-tag">ko <span class="lang-name">Korean</span></span>
+            <span class="lang-tag">ru <span class="lang-name">Russian</span></span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="footer">
+    Nlib API v{{VERSION}} • GPL-3.0
+  </div>
+</body>
+</html>
+
+
+
