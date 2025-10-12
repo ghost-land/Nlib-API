@@ -5,6 +5,8 @@ import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import uptime from './routes/uptime.js'
+import nx from './routes/nx.js'
+import { startScheduler } from './services/scheduler.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -32,6 +34,10 @@ app.get('/', (c) => {
 
 // Routes
 app.route('/uptime', uptime)
+app.route('/nx', nx)
+
+// Start automatic sync scheduler
+startScheduler()
 
 const port = Number(process.env.PORT) || 3000
 serve({ fetch: app.fetch, port }, () => {
