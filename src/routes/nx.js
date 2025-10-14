@@ -5,6 +5,7 @@ import db from '../database/init.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import sharp from 'sharp'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -33,10 +34,13 @@ nx.get('/', (c) => {
 
 // Media endpoints (must be before /:tid to avoid conflicts)
 
-// Get icon
-nx.get('/:tid/icon', (c) => {
+// Get icon with optional resize
+nx.get('/:tid/icon/:width?/:height?', async (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
+    const width = c.req.param('width')
+    const height = c.req.param('height')
+    
     const iconPath = getIconPath(tid)
     
     if (!iconPath) {
@@ -44,7 +48,37 @@ nx.get('/:tid/icon', (c) => {
     }
     
     const image = readFileSync(iconPath)
-    return c.body(image, 200, {
+    
+    // If no dimensions specified, return original
+    if (!width && !height) {
+      return c.body(image, 200, {
+        'Content-Type': 'image/jpeg'
+      })
+    }
+    
+    // Parse dimensions
+    const w = width ? parseInt(width, 10) : null
+    const h = height ? parseInt(height, 10) : null
+    
+    // Validate dimensions
+    if ((w && (isNaN(w) || w <= 0 || w > 4096)) || 
+        (h && (isNaN(h) || h <= 0 || h > 4096))) {
+      return c.json({ 
+        success: false, 
+        error: 'Invalid dimensions. Width and height must be between 1 and 4096' 
+      }, 400)
+    }
+    
+    // Resize image
+    const resizedImage = await sharp(image)
+      .resize(w, h, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .jpeg({ quality: 90 })
+      .toBuffer()
+    
+    return c.body(resizedImage, 200, {
       'Content-Type': 'image/jpeg'
     })
   } catch (error) {

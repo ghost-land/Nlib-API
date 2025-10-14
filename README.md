@@ -64,10 +64,21 @@ GET /nx/01007EF00011E000?lang=fr
 #### Get Game Icon
 
 ```http
-GET /nx/:tid/icon
+GET /nx/:tid/icon/:width?/:height?
 ```
 
-Returns the game icon in JPEG format.
+**Parameters:**
+- `width` (optional) - Target width in pixels (1-4096)
+- `height` (optional) - Target height in pixels (1-4096)
+
+Returns the game icon in JPEG format. If no dimensions are specified, returns the original image.
+
+**Examples:**
+```http
+GET /nx/01007EF00011E000/icon              # Original size
+GET /nx/01007EF00011E000/icon/256/256      # 256x256
+GET /nx/01007EF00011E000/icon/512/512      # 512x512
+```
 
 #### Get Game Banner
 
@@ -264,6 +275,7 @@ bun run start
 - All Title IDs are automatically converted to uppercase
 - Endpoints can be called with or without trailing slashes
 - All images are served in JPEG format
+- Icons support optional resizing via URL parameters (1-4096 pixels)
 - Screenshot URLs are generated dynamically based on the API domain
 - Database synchronization runs automatically
 - API responses use standard HTTP status codes (200, 404, 500)

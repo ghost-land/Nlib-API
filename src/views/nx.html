@@ -178,18 +178,28 @@
         <div class="doc-section">
           <div class="doc-header">
             <span class="method get">GET</span>
-            <code class="endpoint">/nx/:tid/icon</code>
+            <code class="endpoint">/nx/:tid/icon/:width?/:height?</code>
           </div>
-          <p class="doc-description">Retrieve the game icon (JPEG format).</p>
+          <p class="doc-description">Retrieve the game icon with optional resizing (JPEG format).</p>
           
           <div class="doc-subsection">
-            <h3>Example</h3>
-            <pre class="code-block">GET /nx/0100ABC001234000/icon</pre>
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>width</code> <span class="param-type">path</span> <span class="optional">optional</span> - Target width in pixels (1-4096)</li>
+              <li><code>height</code> <span class="param-type">path</span> <span class="optional">optional</span> - Target height in pixels (1-4096)</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Examples</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000/icon
+GET /nx/0100ABC001234000/icon/256/256
+GET /nx/0100ABC001234000/icon/512/512</pre>
           </div>
           
           <div class="doc-subsection">
             <h3>Response</h3>
-            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code></p>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. If no dimensions are specified, returns the original image.</p>
           </div>
         </div>
 
@@ -271,6 +281,7 @@
             <li>All Title IDs are automatically converted to uppercase</li>
             <li>Endpoints can be called with or without a trailing slash</li>
             <li>All images are served in JPEG format</li>
+            <li>Icons support optional resizing (1-4096 pixels) via URL parameters</li>
             <li>Screenshot URLs are generated dynamically based on the API domain</li>
             <li>Database is automatically synchronized with TitleDB</li>
             <li>API responses use standard HTTP status codes (200, 404, 500)</li>
