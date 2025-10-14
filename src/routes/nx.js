@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import { getGameByTID, getGamesCount, getLastSync } from '../services/nxSync.js'
-import { getIconPath, getBannerPath, getScreenshotPath, getAllScreenshots } from '../services/media.js'
+import { getIconPath, getBannerPath, getScreenshotPath, getAllScreenshots, getCachePath, hasCachedImage } from '../services/media.js'
 import db from '../database/init.js'
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import sharp from 'sharp'
@@ -34,7 +34,7 @@ nx.get('/', (c) => {
 
 // Media endpoints (must be before /:tid to avoid conflicts)
 
-// Get icon with optional resize
+// Get icon with optional resize (always square)
 nx.get('/:tid/icon/:width?/:height?', async (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
@@ -47,58 +47,173 @@ nx.get('/:tid/icon/:width?/:height?', async (c) => {
       return c.json({ success: false, error: 'Icon not found' }, 404)
     }
     
-    const image = readFileSync(iconPath)
-    
-    // If no dimensions specified, return original
-    if (!width && !height) {
+    // If no size specified, return original
+    if (!width) {
+      const image = readFileSync(iconPath)
       return c.body(image, 200, {
         'Content-Type': 'image/jpeg'
       })
     }
     
     // Parse dimensions
-    const w = width ? parseInt(width, 10) : null
-    const h = height ? parseInt(height, 10) : null
+    const w = parseInt(width, 10)
+    const h = height ? parseInt(height, 10) : w
     
     // Validate dimensions
-    if ((w && (isNaN(w) || w <= 0 || w > 4096)) || 
-        (h && (isNaN(h) || h <= 0 || h > 4096))) {
+    if (isNaN(w) || w < 60 || w > 4096) {
       return c.json({ 
         success: false, 
-        error: 'Invalid dimensions. Width and height must be between 1 and 4096' 
+        error: 'Invalid size. Size must be between 60 and 4096 pixels' 
       }, 400)
     }
     
-    // Resize image
+    // Icons must be square - if height is provided, it must equal width
+    if (w !== h) {
+      return c.json({ 
+        success: false, 
+        error: 'Icons must be square. Width and height must be the same (e.g., 256/256 or just 256)' 
+      }, 400)
+    }
+    
+    // Round to nearest 10 for cache optimization
+    const roundedSize = Math.round(w / 10) * 10
+    
+    // Check cache
+    const cachePath = getCachePath(tid, 'icon', roundedSize, roundedSize)
+    
+    if (hasCachedImage(cachePath)) {
+      const cachedImage = readFileSync(cachePath)
+      return c.body(cachedImage, 200, {
+        'Content-Type': 'image/jpeg',
+        'X-Cache': 'HIT',
+        'X-Size-Rounded': w !== roundedSize ? `${w}->${roundedSize}` : `${roundedSize}`
+      })
+    }
+    
+    // Resize image (square) using rounded size
+    const image = readFileSync(iconPath)
     const resizedImage = await sharp(image)
-      .resize(w, h, {
+      .resize(roundedSize, roundedSize, {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
       .jpeg({ quality: 90 })
       .toBuffer()
     
+    // Save to cache
+    writeFileSync(cachePath, resizedImage)
+    
     return c.body(resizedImage, 200, {
-      'Content-Type': 'image/jpeg'
+      'Content-Type': 'image/jpeg',
+      'X-Cache': 'MISS',
+      'X-Size-Rounded': w !== roundedSize ? `${w}->${roundedSize}` : `${roundedSize}`
     })
   } catch (error) {
     return c.json({ success: false, error: error.message }, 500)
   }
 })
 
-// Get banner
-nx.get('/:tid/banner', (c) => {
+// Get banner with optional resize
+nx.get('/:tid/banner/:size?', async (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
+    const size = c.req.param('size')
+    
     const bannerPath = getBannerPath(tid)
     
     if (!bannerPath) {
       return c.json({ success: false, error: 'Banner not found' }, 404)
     }
     
+    // Determine dimensions
+    let width = 1920
+    let height = 1080
+    
+    if (size) {
+      // Handle shorthand formats
+      if (size === '240p' || size === '240') {
+        width = 426
+        height = 240
+      } else if (size === '360p' || size === '360') {
+        width = 640
+        height = 360
+      } else if (size === '480p' || size === '480') {
+        width = 854
+        height = 480
+      } else if (size === '540p' || size === '540') {
+        width = 960
+        height = 540
+      } else if (size === '720p' || size === '720') {
+        width = 1280
+        height = 720
+      } else if (size === '1080p' || size === '1080') {
+        width = 1920
+        height = 1080
+      } else {
+        // Try to parse as width
+        const parsedWidth = parseInt(size, 10)
+        if (isNaN(parsedWidth)) {
+          return c.json({ 
+            success: false, 
+            error: 'Invalid size. Use 240/240p, 360/360p, 480/480p, 540/540p, 720/720p, 1080/1080p, or specific widths (426, 640, 854, 960, 1280, 1920)' 
+          }, 400)
+        }
+        
+        // Support specific widths
+        if (parsedWidth === 426) {
+          width = 426
+          height = 240
+        } else if (parsedWidth === 640) {
+          width = 640
+          height = 360
+        } else if (parsedWidth === 854) {
+          width = 854
+          height = 480
+        } else if (parsedWidth === 960) {
+          width = 960
+          height = 540
+        } else if (parsedWidth === 1280) {
+          width = 1280
+          height = 720
+        } else if (parsedWidth === 1920) {
+          width = 1920
+          height = 1080
+        } else {
+          return c.json({ 
+            success: false, 
+            error: 'Supported sizes: 426x240 (240p), 640x360 (360p), 854x480 (480p), 960x540 (540p), 1280x720 (720p), 1920x1080 (1080p)' 
+          }, 400)
+        }
+      }
+    }
+    
+    // Check cache
+    const cachePath = getCachePath(tid, 'banner', width, height)
+    
+    if (hasCachedImage(cachePath)) {
+      const cachedImage = readFileSync(cachePath)
+      return c.body(cachedImage, 200, {
+        'Content-Type': 'image/jpeg',
+        'X-Cache': 'HIT'
+      })
+    }
+    
+    // Resize image
     const image = readFileSync(bannerPath)
-    return c.body(image, 200, {
-      'Content-Type': 'image/jpeg'
+    const resizedImage = await sharp(image)
+      .resize(width, height, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .jpeg({ quality: 90 })
+      .toBuffer()
+    
+    // Save to cache
+    writeFileSync(cachePath, resizedImage)
+    
+    return c.body(resizedImage, 200, {
+      'Content-Type': 'image/jpeg',
+      'X-Cache': 'MISS'
     })
   } catch (error) {
     return c.json({ success: false, error: error.message }, 500)

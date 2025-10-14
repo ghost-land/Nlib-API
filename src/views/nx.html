@@ -180,44 +180,63 @@
             <span class="method get">GET</span>
             <code class="endpoint">/nx/:tid/icon/:width?/:height?</code>
           </div>
-          <p class="doc-description">Retrieve the game icon with optional resizing (JPEG format).</p>
+          <p class="doc-description">Retrieve the game icon with optional resizing (JPEG format). Icons are always square.</p>
           
           <div class="doc-subsection">
             <h3>Parameters</h3>
             <ul class="param-list">
-              <li><code>width</code> <span class="param-type">path</span> <span class="optional">optional</span> - Target width in pixels (1-4096)</li>
-              <li><code>height</code> <span class="param-type">path</span> <span class="optional">optional</span> - Target height in pixels (1-4096)</li>
+              <li><code>width</code> <span class="param-type">path</span> <span class="optional">optional</span> - Size in pixels (60-4096). Rounded to nearest 10 for cache optimization.</li>
+              <li><code>height</code> <span class="param-type">path</span> <span class="optional">optional</span> - Must equal width if provided. Icons are always square.</li>
             </ul>
           </div>
 
           <div class="doc-subsection">
             <h3>Examples</h3>
-            <pre class="code-block">GET /nx/0100ABC001234000/icon
-GET /nx/0100ABC001234000/icon/256/256
-GET /nx/0100ABC001234000/icon/512/512</pre>
+            <pre class="code-block">GET /nx/0100ABC001234000/icon          # Original size
+GET /nx/0100ABC001234000/icon/64       # 60x60 (rounded)
+GET /nx/0100ABC001234000/icon/67       # 70x70 (rounded)
+GET /nx/0100ABC001234000/icon/256      # 260x260 (rounded)
+GET /nx/0100ABC001234000/icon/256/256  # 260x260 (explicit)
+GET /nx/0100ABC001234000/icon/512/512  # 510x510 (rounded)
+GET /nx/0100ABC001234000/icon/1024     # 1020x1020 (rounded)</pre>
           </div>
           
           <div class="doc-subsection">
             <h3>Response</h3>
-            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. If no dimensions are specified, returns the original image.</p>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. Icons are always square. Sizes are automatically rounded to the nearest 10 pixels for cache optimization (e.g., 64->60, 67->70). Header <code>X-Size-Rounded</code> shows the actual size served.</p>
           </div>
         </div>
 
         <div class="doc-section">
           <div class="doc-header">
             <span class="method get">GET</span>
-            <code class="endpoint">/nx/:tid/banner</code>
+            <code class="endpoint">/nx/:tid/banner/:size?</code>
           </div>
-          <p class="doc-description">Retrieve the game banner (JPEG format).</p>
+          <p class="doc-description">Retrieve the game banner with optional size selection (JPEG format).</p>
           
           <div class="doc-subsection">
-            <h3>Example</h3>
-            <pre class="code-block">GET /nx/0100ABC001234000/banner</pre>
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>size</code> <span class="param-type">path</span> <span class="optional">optional</span> - Banner size: <code>240</code>/<code>240p</code>, <code>360</code>/<code>360p</code>, <code>480</code>/<code>480p</code>, <code>540</code>/<code>540p</code>, <code>720</code>/<code>720p</code>, <code>1080</code>/<code>1080p</code>, or specific widths. Default: 1920x1080</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Examples</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000/banner         # 1920x1080 (default)
+GET /nx/0100ABC001234000/banner/1080p   # 1920x1080
+GET /nx/0100ABC001234000/banner/720p    # 1280x720
+GET /nx/0100ABC001234000/banner/540p    # 960x540
+GET /nx/0100ABC001234000/banner/480p    # 854x480
+GET /nx/0100ABC001234000/banner/360p    # 640x360
+GET /nx/0100ABC001234000/banner/240p    # 426x240
+GET /nx/0100ABC001234000/banner/1920    # 1920x1080
+GET /nx/0100ABC001234000/banner/426     # 426x240</pre>
           </div>
           
           <div class="doc-subsection">
             <h3>Response</h3>
-            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code></p>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. Supported sizes: 426x240, 640x360, 854x480, 960x540, 1280x720, 1920x1080.</p>
           </div>
         </div>
 
@@ -281,7 +300,9 @@ GET /nx/0100ABC001234000/icon/512/512</pre>
             <li>All Title IDs are automatically converted to uppercase</li>
             <li>Endpoints can be called with or without a trailing slash</li>
             <li>All images are served in JPEG format</li>
-            <li>Icons support optional resizing (1-4096 pixels) via URL parameters</li>
+            <li>Icons support optional resizing (60-4096 pixels, rounded to nearest 10) and are always square</li>
+            <li>Banners support multiple sizes: 240p, 360p, 480p, 540p, 720p, 1080p</li>
+            <li>Resized images are cached on disk for optimal performance</li>
             <li>Screenshot URLs are generated dynamically based on the API domain</li>
             <li>Database is automatically synchronized with TitleDB</li>
             <li>API responses use standard HTTP status codes (200, 404, 500)</li>

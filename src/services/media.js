@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from 'fs'
+import { existsSync, readdirSync, statSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -83,6 +83,34 @@ export function getAllScreenshots(tid) {
 export function hasMedia(tid) {
   const tidDir = join(MEDIA_DIR, tid)
   return existsSync(tidDir)
+}
+
+/**
+ * Get cache path for a resized image
+ * @param {string} tid - Title ID
+ * @param {string} type - Image type ('icon' or 'banner')
+ * @param {number} width - Width in pixels
+ * @param {number} height - Height in pixels
+ * @returns {string} - Full path to cached image
+ */
+export function getCachePath(tid, type, width, height) {
+  const cacheDir = join(MEDIA_DIR, tid, 'cache')
+  
+  // Create cache directory if it doesn't exist
+  if (!existsSync(cacheDir)) {
+    mkdirSync(cacheDir, { recursive: true })
+  }
+  
+  return join(cacheDir, `${type}_${width}x${height}.jpg`)
+}
+
+/**
+ * Check if cached image exists
+ * @param {string} cachePath - Path to cached image
+ * @returns {boolean}
+ */
+export function hasCachedImage(cachePath) {
+  return existsSync(cachePath)
 }
 
 
