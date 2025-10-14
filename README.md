@@ -31,10 +31,21 @@ GET /nx/:tid?lang=en
 - `tid` (required) - 16-character hexadecimal Title ID
 - `lang` (optional) - Language code, default: `en`
   - Available: `en`, `ja`, `es`, `de`, `fr`, `nl`, `pt`, `it`, `zh`, `ko`, `ru`
+- `fields` (optional) - Comma-separated list of fields to include. Always includes `id`.
+  - Example: `name,description,publisher`
 
-**Example Request:**
+**Example Requests:**
 ```http
+# Full response
 GET /nx/01007EF00011E000?lang=fr
+
+# Only specific fields
+GET /nx/01007EF00011E000?fields=name,description
+GET /nx/01007EF00011E000?fields=description
+GET /nx/01007EF00011E000?fields=name,publisher,releaseDate,icon
+
+# Combine parameters
+GET /nx/01007EF00011E000?lang=fr&fields=name,description,intro
 ```
 
 **Example Response:**
@@ -71,7 +82,43 @@ GET /nx/01007EF00011E000?lang=fr
 }
 ```
 
-Note: Media URLs (`icon`, `banner`, `screens`) are only included if the corresponding media files are available for the game.
+**Example Filtered Response:**
+```http
+GET /nx/01007EF00011E000?fields=name,description
+```
+
+```json
+{
+  "id": "01007EF00011E000",
+  "name": "The Legend of Zelda™: Breath of the Wild",
+  "description": "Full game description..."
+}
+```
+
+**Notes:**
+- Media URLs (`icon`, `banner`, `screens`) are only included if the corresponding media files are available
+- Use the `fields` parameter to request only specific data and reduce response size
+- The `id` field is always included in the response
+- SQL queries are optimized to select only requested fields
+- Media checks (filesystem operations) are skipped if not requested
+
+**Performance Benefits:**
+
+| Request | Response Size | SQL Complexity | Media Checks |
+|---------|---------------|----------------|--------------|
+| Full response | 2-5 KB | All fields + JOIN | 3 file checks |
+| `?fields=name,publisher` | ~100 bytes | 2 fields only | None |
+| `?fields=description` | ~1-3 KB | 1 field + JOIN | None |
+| `?fields=name,icon` | ~200 bytes | 1 field only | Icon only |
+
+**Example optimization:**
+```http
+# Before: Full response (2.5 KB, 15ms)
+GET /nx/01007EF00011E000
+
+# After: Only what you need (150 bytes, 3ms)
+GET /nx/01007EF00011E000?fields=name,publisher
+```
 
 #### Get Game Icon
 

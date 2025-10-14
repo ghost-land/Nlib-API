@@ -373,37 +373,67 @@ nx.get('/:tid', (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
     const lang = c.req.query('lang') || 'en' // Default to English
+    const fieldsParam = c.req.query('fields') // Optional fields filter
     
     // Validate language
     const validLangs = ['en', 'ja', 'es', 'de', 'fr', 'nl', 'pt', 'it', 'zh', 'ko', 'ru']
     const selectedLang = validLangs.includes(lang) ? lang : 'en'
     
-    // Get game data with selected language
-    const gameStmt = db.prepare(`
-      SELECT 
-        g.tid as id,
-        g.name,
-        g.publisher,
-        g.developer,
-        g.release_date as releaseDate,
-        g.category,
-        g.languages,
-        g.nsu_id as nsuId,
-        g.number_of_players as numberOfPlayers,
-        g.rating_content as ratingContent,
-        g.rights_id as rightsId,
-        g.region,
-        g.is_demo as isDemo,
-        g.console,
-        g.type,
-        g.version,
-        e.intro,
-        e.description
-      FROM games g
-      LEFT JOIN nx_${selectedLang} e ON g.tid = e.tid
-      WHERE g.tid = ?
-    `)
+    // Map API fields to SQL columns
+    const fieldMapping = {
+      id: 'g.tid as id',
+      name: 'g.name',
+      publisher: 'g.publisher',
+      developer: 'g.developer',
+      releaseDate: 'g.release_date as releaseDate',
+      category: 'g.category',
+      languages: 'g.languages',
+      nsuId: 'g.nsu_id as nsuId',
+      numberOfPlayers: 'g.number_of_players as numberOfPlayers',
+      ratingContent: 'g.rating_content as ratingContent',
+      rightsId: 'g.rights_id as rightsId',
+      region: 'g.region',
+      isDemo: 'g.is_demo as isDemo',
+      console: 'g.console',
+      type: 'g.type',
+      version: 'g.version',
+      intro: 'e.intro',
+      description: 'e.description'
+    }
     
+    // Determine which fields to select
+    let requestedFields = []
+    let needsJoin = false
+    
+    if (fieldsParam) {
+      const fields = fieldsParam.split(',').map(f => f.trim())
+      // Always include id
+      requestedFields = ['id', ...fields.filter(f => f !== 'id' && fieldMapping[f])]
+      
+      // Check if we need the language join
+      needsJoin = requestedFields.includes('intro') || requestedFields.includes('description')
+    } else {
+      // Select all fields
+      requestedFields = Object.keys(fieldMapping)
+      needsJoin = true
+    }
+    
+    // Build SELECT clause
+    const selectFields = requestedFields
+      .filter(field => fieldMapping[field])
+      .map(field => fieldMapping[field])
+      .join(', ')
+    
+    // Build query
+    let query = `SELECT ${selectFields} FROM games g`
+    
+    if (needsJoin) {
+      query += ` LEFT JOIN nx_${selectedLang} e ON g.tid = e.tid`
+    }
+    
+    query += ` WHERE g.tid = ?`
+    
+    const gameStmt = db.prepare(query)
     const game = gameStmt.get(tid)
     
     if (!game) {
@@ -439,21 +469,56 @@ nx.get('/:tid', (c) => {
       type: game.type || 'base'
     }
     
-    // Add media URLs if available
-    if (getIconPath(tid)) {
-      response.icon = `${baseUrl}/nx/${tid}/icon`
-    }
+    // Determine which media to check based on requested fields
+    const shouldCheckMedia = !fieldsParam || 
+                             fieldsParam.includes('icon') || 
+                             fieldsParam.includes('banner') || 
+                             fieldsParam.includes('screens')
     
-    if (getBannerPath(tid)) {
-      response.banner = `${baseUrl}/nx/${tid}/banner`
-    }
-    
-    const screenshots = getAllScreenshots(tid)
-    if (screenshots.length > 0) {
-      response.screens = {
-        count: screenshots.length,
-        screenshots: screenshots.map(index => `${baseUrl}/nx/${tid}/screen/${index}`)
+    // Add media URLs only if requested (or if no filter specified)
+    if (shouldCheckMedia || !fieldsParam) {
+      // Check icon only if needed
+      if (!fieldsParam || fieldsParam.includes('icon')) {
+        if (getIconPath(tid)) {
+          response.icon = `${baseUrl}/nx/${tid}/icon`
+        }
       }
+      
+      // Check banner only if needed
+      if (!fieldsParam || fieldsParam.includes('banner')) {
+        if (getBannerPath(tid)) {
+          response.banner = `${baseUrl}/nx/${tid}/banner`
+        }
+      }
+      
+      // Check screenshots only if needed
+      if (!fieldsParam || fieldsParam.includes('screens')) {
+        const screenshots = getAllScreenshots(tid)
+        if (screenshots.length > 0) {
+          response.screens = {
+            count: screenshots.length,
+            screenshots: screenshots.map(index => `${baseUrl}/nx/${tid}/screen/${index}`)
+          }
+        }
+      }
+    }
+    
+    // Apply field filtering if requested
+    if (fieldsParam) {
+      const requestedFields = fieldsParam.split(',').map(f => f.trim())
+      const filteredResponse = {}
+      
+      // Always include id
+      filteredResponse.id = response.id
+      
+      // Add only requested fields
+      for (const field of requestedFields) {
+        if (field !== 'id' && response.hasOwnProperty(field)) {
+          filteredResponse[field] = response[field]
+        }
+      }
+      
+      return c.json(filteredResponse)
     }
     
     return c.json(response)
