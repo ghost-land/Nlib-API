@@ -40,26 +40,38 @@ GET /nx/01007EF00011E000?lang=fr
 **Example Response:**
 ```json
 {
+  "description": "Full game description...",
   "id": "01007EF00011E000",
   "name": "The Legend of Zelda™: Breath of the Wild",
-  "description": "Full game description...",
-  "intro": "Short introduction...",
   "publisher": "Nintendo",
-  "developer": "Nintendo EPD",
   "releaseDate": "2017-03-03",
   "version": 196608,
   "category": ["Adventure", "Action", "RPG"],
+  "developer": "Nintendo EPD",
+  "intro": "Short introduction...",
+  "isDemo": false,
   "languages": ["ja", "en", "es", "fr", "de", "it", "nl", "ru", "ko", "zh"],
   "nsuId": 70010000000025,
   "numberOfPlayers": 1,
   "ratingContent": ["Fantasy Violence", "Mild Suggestive Themes"],
   "region": "US",
   "rightsId": "01007EF00011E0000000000000000000",
-  "isDemo": false,
   "console": "nx",
-  "type": "base"
+  "type": "base",
+  "icon": "https://api.nlib.cc/nx/01007EF00011E000/icon",
+  "banner": "https://api.nlib.cc/nx/01007EF00011E000/banner",
+  "screens": {
+    "count": 8,
+    "screenshots": [
+      "https://api.nlib.cc/nx/01007EF00011E000/screen/1",
+      "https://api.nlib.cc/nx/01007EF00011E000/screen/2",
+      "https://api.nlib.cc/nx/01007EF00011E000/screen/3"
+    ]
+  }
 }
 ```
+
+Note: Media URLs (`icon`, `banner`, `screens`) are only included if the corresponding media files are available for the game.
 
 #### Get Game Icon
 

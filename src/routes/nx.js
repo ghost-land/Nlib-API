@@ -413,6 +413,10 @@ nx.get('/:tid', (c) => {
       }, 404)
     }
     
+    // Get base URL from request
+    const url = new URL(c.req.url)
+    const baseUrl = `${url.protocol}//${url.host}`
+    
     // Parse JSON fields
     const response = {
       description: game.description || null,
@@ -433,6 +437,23 @@ nx.get('/:tid', (c) => {
       rightsId: game.rightsId || null,
       console: game.console || 'nx',
       type: game.type || 'base'
+    }
+    
+    // Add media URLs if available
+    if (getIconPath(tid)) {
+      response.icon = `${baseUrl}/nx/${tid}/icon`
+    }
+    
+    if (getBannerPath(tid)) {
+      response.banner = `${baseUrl}/nx/${tid}/banner`
+    }
+    
+    const screenshots = getAllScreenshots(tid)
+    if (screenshots.length > 0) {
+      response.screens = {
+        count: screenshots.length,
+        screenshots: screenshots.map(index => `${baseUrl}/nx/${tid}/screen/${index}`)
+      }
     }
     
     return c.json(response)

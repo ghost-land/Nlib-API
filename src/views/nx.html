@@ -148,25 +148,39 @@
           <div class="doc-subsection">
             <h3>Example Response</h3>
             <pre class="code-block">{
+  "description": "Full game description...",
   "id": "0100ABC001234000",
   "name": "The Legend of Zelda: Breath of the Wild",
-  "description": "Full game description...",
-  "intro": "Brief summary...",
   "publisher": "Nintendo",
-  "developer": "Nintendo EPD",
   "releaseDate": "2017-03-03",
   "version": 196608,
   "category": ["Adventure", "Action"],
+  "developer": "Nintendo EPD",
+  "intro": "Brief summary...",
+  "isDemo": false,
   "languages": ["en", "fr", "es", "de", "it"],
   "nsuId": 70010000000025,
   "numberOfPlayers": 1,
   "ratingContent": ["Violence"],
   "region": "US",
   "rightsId": "0100ABC00123400000000000000000AB",
-  "isDemo": false,
   "console": "nx",
-  "type": "base"
+  "type": "base",
+  "icon": "https://api.nlib.cc/nx/0100ABC001234000/icon",
+  "banner": "https://api.nlib.cc/nx/0100ABC001234000/banner",
+  "screens": {
+    "count": 8,
+    "screenshots": [
+      "https://api.nlib.cc/nx/0100ABC001234000/screen/1",
+      "https://api.nlib.cc/nx/0100ABC001234000/screen/2",
+      "https://api.nlib.cc/nx/0100ABC001234000/screen/3"
+    ]
+  }
 }</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <p class="note">Media URLs (<code>icon</code>, <code>banner</code>, <code>screens</code>) are only included if the corresponding media files are available.</p>
           </div>
         </div>
       </section>
