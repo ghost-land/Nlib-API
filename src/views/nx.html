@@ -225,7 +225,7 @@ GET /nx/0100ABC001234000?lang=fr&fields=name,description</pre>
           <div class="doc-subsection">
             <h3>Parameters</h3>
             <ul class="param-list">
-              <li><code>width</code> <span class="param-type">path</span> <span class="optional">optional</span> - Size in pixels (60-4096). Rounded to nearest 10 for cache optimization.</li>
+              <li><code>width</code> <span class="param-type">path</span> <span class="optional">optional</span> - Size in pixels (30-4096). Rounded to nearest 10 for cache optimization.</li>
               <li><code>height</code> <span class="param-type">path</span> <span class="optional">optional</span> - Must equal width if provided. Icons are always square.</li>
             </ul>
           </div>
@@ -233,8 +233,8 @@ GET /nx/0100ABC001234000?lang=fr&fields=name,description</pre>
           <div class="doc-subsection">
             <h3>Examples</h3>
             <pre class="code-block">GET /nx/0100ABC001234000/icon          # Original size
+GET /nx/0100ABC001234000/icon/32       # 30x30 (rounded)
 GET /nx/0100ABC001234000/icon/64       # 60x60 (rounded)
-GET /nx/0100ABC001234000/icon/67       # 70x70 (rounded)
 GET /nx/0100ABC001234000/icon/256      # 260x260 (rounded)
 GET /nx/0100ABC001234000/icon/256/256  # 260x260 (explicit)
 GET /nx/0100ABC001234000/icon/512/512  # 510x510 (rounded)
@@ -243,7 +243,7 @@ GET /nx/0100ABC001234000/icon/1024     # 1020x1020 (rounded)</pre>
           
           <div class="doc-subsection">
             <h3>Response</h3>
-            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. Icons are always square. Sizes are automatically rounded to the nearest 10 pixels for cache optimization (e.g., 64->60, 67->70). Header <code>X-Size-Rounded</code> shows the actual size served.</p>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. Icons are always square. Sizes are automatically rounded to the nearest 10 pixels for cache optimization (e.g., 32->30, 64->60, 67->70). Header <code>X-Size-Rounded</code> shows the actual size served.</p>
           </div>
         </div>
 
@@ -252,31 +252,43 @@ GET /nx/0100ABC001234000/icon/1024     # 1020x1020 (rounded)</pre>
             <span class="method get">GET</span>
             <code class="endpoint">/nx/:tid/banner/:size?</code>
           </div>
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/nx/:tid/banner/:width/:height</code>
+          </div>
           <p class="doc-description">Retrieve the game banner with optional size selection (JPEG format).</p>
           
           <div class="doc-subsection">
             <h3>Parameters</h3>
             <ul class="param-list">
               <li><code>size</code> <span class="param-type">path</span> <span class="optional">optional</span> - Banner size: <code>240</code>/<code>240p</code>, <code>360</code>/<code>360p</code>, <code>480</code>/<code>480p</code>, <code>540</code>/<code>540p</code>, <code>720</code>/<code>720p</code>, <code>1080</code>/<code>1080p</code>, or specific widths. Default: 1920x1080</li>
+              <li><code>width</code> <span class="param-type">path</span> <span class="optional">optional</span> - Custom width in pixels (100-1920)</li>
+              <li><code>height</code> <span class="param-type">path</span> <span class="optional">optional</span> - Custom height in pixels (100-1080)</li>
             </ul>
           </div>
 
           <div class="doc-subsection">
-            <h3>Examples</h3>
+            <h3>Examples (Shortcuts)</h3>
             <pre class="code-block">GET /nx/0100ABC001234000/banner         # 1920x1080 (default)
 GET /nx/0100ABC001234000/banner/1080p   # 1920x1080
 GET /nx/0100ABC001234000/banner/720p    # 1280x720
 GET /nx/0100ABC001234000/banner/540p    # 960x540
 GET /nx/0100ABC001234000/banner/480p    # 854x480
 GET /nx/0100ABC001234000/banner/360p    # 640x360
-GET /nx/0100ABC001234000/banner/240p    # 426x240
-GET /nx/0100ABC001234000/banner/1920    # 1920x1080
-GET /nx/0100ABC001234000/banner/426     # 426x240</pre>
+GET /nx/0100ABC001234000/banner/240p    # 426x240</pre>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Examples (Custom dimensions)</h3>
+            <pre class="code-block">GET /nx/0100ABC001234000/banner/1280/720   # Custom 1280x720
+GET /nx/0100ABC001234000/banner/1920/1080  # Custom 1920x1080
+GET /nx/0100ABC001234000/banner/800/450    # Custom 800x450
+GET /nx/0100ABC001234000/banner/640/360    # Custom 640x360</pre>
           </div>
           
           <div class="doc-subsection">
             <h3>Response</h3>
-            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. Supported sizes: 426x240, 640x360, 854x480, 960x540, 1280x720, 1920x1080.</p>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>. Supports shortcuts (240p-1080p) or custom dimensions (100-1920 x 100-1080).</p>
           </div>
         </div>
 
@@ -340,8 +352,9 @@ GET /nx/0100ABC001234000/banner/426     # 426x240</pre>
             <li>All Title IDs are automatically converted to uppercase</li>
             <li>Endpoints can be called with or without a trailing slash</li>
             <li>All images are served in JPEG format</li>
-            <li>Icons support optional resizing (60-4096 pixels, rounded to nearest 10) and are always square</li>
+            <li>Icons support optional resizing (30-4096 pixels, rounded to nearest 10) and are always square</li>
             <li>Banners support multiple sizes: 240p, 360p, 480p, 540p, 720p, 1080p</li>
+            <li>Banners support custom dimensions: /banner/:width/:height (100-1920 x 100-1080)</li>
             <li>Resized images are cached on disk for optimal performance</li>
             <li>Screenshot URLs are generated dynamically based on the API domain</li>
             <li>Database is automatically synchronized with TitleDB</li>
