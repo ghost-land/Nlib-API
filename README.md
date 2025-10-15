@@ -248,29 +248,29 @@ Returns server status and uptime information.
 
 ## Database Schema
 
-### games
+### nx
 
 Main table storing game information.
 
 | Column | Type | Description |
 |--------|------|-------------|
-| tid | TEXT | Title ID (Primary Key) |
+| tid | VARCHAR(16) | Title ID (Primary Key) |
 | name | TEXT | Game name |
 | publisher | TEXT | Publisher name |
 | developer | TEXT | Developer name |
-| release_date | TEXT | Release date (YYYY-MM-DD) |
+| release_date | VARCHAR(10) | Release date (YYYY-MM-DD) |
 | category | TEXT | Categories (JSON array) |
 | languages | TEXT | Supported languages (JSON array) |
-| nsu_id | INTEGER | Nintendo eShop ID |
+| nsu_id | BIGINT | Nintendo eShop ID |
 | number_of_players | INTEGER | Number of players |
 | rating_content | TEXT | Rating content (JSON array) |
-| rights_id | TEXT | Rights ID |
-| region | TEXT | Region code |
+| rights_id | VARCHAR(32) | Rights ID |
+| region | VARCHAR(10) | Region code |
 | is_demo | INTEGER | Is demo (0/1) |
-| console | TEXT | Console identifier (default: 'nx') |
-| type | TEXT | Game type (base/update/dlc) |
+| console | VARCHAR(10) | Console identifier (default: 'nx') |
+| type | VARCHAR(20) | Game type (base/update/dlc) |
 | version | INTEGER | Version number |
-| updated_at | DATETIME | Last update timestamp |
+| updated_at | TIMESTAMP | Last update timestamp |
 
 ### nx_[lang]
 
@@ -278,7 +278,7 @@ Language-specific tables for game descriptions (11 tables: en, ja, es, de, fr, n
 
 | Column | Type | Description |
 |--------|------|-------------|
-| tid | TEXT | Title ID (Primary Key, Foreign Key) |
+| tid | VARCHAR(16) | Title ID (Primary Key, Foreign Key) |
 | intro | TEXT | Short introduction |
 | description | TEXT | Full description |
 
@@ -288,11 +288,11 @@ Tracks synchronization history.
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | INTEGER | Auto-increment ID (Primary Key) |
-| synced_at | DATETIME | Sync timestamp |
+| id | SERIAL | Auto-increment ID (Primary Key) |
+| synced_at | TIMESTAMP | Sync timestamp |
 | games_count | INTEGER | Number of games synced |
-| status | TEXT | Sync status |
-| source | TEXT | Sync source |
+| status | VARCHAR(50) | Sync status |
+| source | VARCHAR(100) | Sync source |
 
 ## Automatic Synchronization
 
@@ -325,10 +325,32 @@ The API uses a two-stage synchronization system:
 
 ### Requirements
 
-- Node.js 18+ or Bun
-- SQLite3
+- Node.js 18+
+- PostgreSQL 12+
 
-### Setup
+### Database Setup
+
+1. **Create PostgreSQL database:**
+
+```bash
+# Connect to PostgreSQL
+psql -U postgres
+
+# Create database and user
+CREATE DATABASE nlib_api;
+CREATE USER nlib_user WITH PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE nlib_api TO nlib_user;
+\q
+```
+
+2. **Create tables:**
+
+```bash
+# Execute the schema file
+psql -h localhost -U nlib_user -d nlib_api -f database-schema.sql
+```
+
+### Application Setup
 
 ```bash
 # Clone the repository
@@ -338,6 +360,10 @@ cd Nlib-API
 # Install dependencies
 npm install
 
+# Create .env file
+cp .env.example .env
+# Edit .env with your database credentials
+
 # Start the server
 npm start
 ```
@@ -346,18 +372,22 @@ The server will start on port 3000 by default (configurable via `PORT` environme
 
 ## Environment Variables
 
+Copy `.env.example` to `.env` and configure your database credentials:
+
 ```bash
-PORT=3000  # Server port (default: 3000)
+cp .env.example .env
 ```
+
+Then edit `.env` with your PostgreSQL connection details.
 
 ## Development
 
 ```bash
-# Run with auto-reload
-npm run dev
+# Run in development mode
+npm start
 
-# Run with Bun
-bun run start
+# Enable debug logs
+# Add DB_DEBUG=true to your .env file
 ```
 
 ## Important Notes
