@@ -134,7 +134,7 @@ GET /nx/:tid/icon/:width?/:height?
 ```
 
 **Parameters:**
-- `width` (optional) - Size in pixels (60-4096). Automatically rounded to nearest 10.
+- `width` (optional) - Size in pixels (30-4096). Automatically rounded to nearest 10.
 - `height` (optional) - Must equal width if provided. Icons are always square.
 
 Returns the game icon in JPEG format. If no size is specified, returns the original image.
@@ -142,8 +142,8 @@ Returns the game icon in JPEG format. If no size is specified, returns the origi
 **Examples:**
 ```http
 GET /nx/01007EF00011E000/icon              # Original size
+GET /nx/01007EF00011E000/icon/32           # 30x30 (rounded)
 GET /nx/01007EF00011E000/icon/64           # 60x60 (rounded)
-GET /nx/01007EF00011E000/icon/67           # 70x70 (rounded)
 GET /nx/01007EF00011E000/icon/256          # 260x260 (rounded)
 GET /nx/01007EF00011E000/icon/256/256      # 260x260 (explicit)
 GET /nx/01007EF00011E000/icon/512/512      # 510x510 (rounded)
@@ -153,7 +153,7 @@ GET /nx/01007EF00011E000/icon/1024         # 1020x1020 (rounded)
 **Notes:**
 - Icons are always square
 - Sizes are automatically rounded to the nearest 10 pixels for cache optimization
-- Minimum size: 60 pixels
+- Minimum size: 30 pixels
 - Both `/icon/256` and `/icon/256/256` produce identical results
 - Response header `X-Size-Rounded` shows the actual size served (e.g., `64->60`)
 
@@ -161,18 +161,20 @@ GET /nx/01007EF00011E000/icon/1024         # 1020x1020 (rounded)
 
 ```http
 GET /nx/:tid/banner/:size?
+GET /nx/:tid/banner/:width/:height
 ```
 
 **Parameters:**
-- `size` (optional) - Banner size
+- `size` (optional) - Banner size shorthand
   - Shortcuts: `240`/`240p`, `360`/`360p`, `480`/`480p`, `540`/`540p`, `720`/`720p`, `1080`/`1080p`
   - Widths: `426`, `640`, `854`, `960`, `1280`, `1920`
   - Default: 1920x1080 (1080p)
-  - Supported sizes: 426x240, 640x360, 854x480, 960x540, 1280x720, 1920x1080
+- `width` (optional) - Custom width in pixels (100-1920)
+- `height` (optional) - Custom height in pixels (100-1080)
 
 Returns the game banner in JPEG format.
 
-**Examples:**
+**Examples (Shortcuts):**
 ```http
 GET /nx/01007EF00011E000/banner         # 1920x1080 (default)
 GET /nx/01007EF00011E000/banner/1080p   # 1920x1080
@@ -183,6 +185,14 @@ GET /nx/01007EF00011E000/banner/360p    # 640x360
 GET /nx/01007EF00011E000/banner/240p    # 426x240
 GET /nx/01007EF00011E000/banner/1920    # 1920x1080
 GET /nx/01007EF00011E000/banner/426     # 426x240
+```
+
+**Examples (Custom dimensions):**
+```http
+GET /nx/01007EF00011E000/banner/1280/720   # Custom 1280x720
+GET /nx/01007EF00011E000/banner/1920/1080  # Custom 1920x1080
+GET /nx/01007EF00011E000/banner/800/450    # Custom 800x450
+GET /nx/01007EF00011E000/banner/640/360    # Custom 640x360
 ```
 
 #### Get Screenshot
@@ -402,8 +412,9 @@ npm start
 - All Title IDs are automatically converted to uppercase
 - Endpoints can be called with or without trailing slashes
 - All images are served in JPEG format
-- Icons support optional resizing (60-4096 pixels, rounded to nearest 10) and are always square
+- Icons support optional resizing (30-4096 pixels, rounded to nearest 10) and are always square
 - Banners support multiple sizes: 240p, 360p, 480p, 540p, 720p, 1080p
+- Banners support custom dimensions: `/banner/:width/:height` (100-1920 x 100-1080)
 - Resized images are cached on disk for optimal performance
 - Screenshot URLs are generated dynamically based on the API domain
 - Database synchronization runs automatically

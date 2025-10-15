@@ -60,10 +60,10 @@ nx.get('/:tid/icon/:width?/:height?', async (c) => {
     const h = height ? parseInt(height, 10) : w
     
     // Validate dimensions
-    if (isNaN(w) || w < 60 || w > 4096) {
+    if (isNaN(w) || w < 30 || w > 4096) {
       return c.json({ 
         success: false, 
-        error: 'Invalid size. Size must be between 60 and 4096 pixels' 
+        error: 'Invalid size. Size must be between 30 and 4096 pixels' 
       }, 400)
     }
     
@@ -113,7 +113,61 @@ nx.get('/:tid/icon/:width?/:height?', async (c) => {
   }
 })
 
-// Get banner with optional resize
+// Get banner with width/height format
+nx.get('/:tid/banner/:width/:height', async (c) => {
+  try {
+    const tid = c.req.param('tid').toUpperCase()
+    const width = parseInt(c.req.param('width'), 10)
+    const height = parseInt(c.req.param('height'), 10)
+    
+    const bannerPath = getBannerPath(tid)
+    
+    if (!bannerPath) {
+      return c.json({ success: false, error: 'Banner not found' }, 404)
+    }
+    
+    // Validate dimensions
+    if (isNaN(width) || isNaN(height) || width < 100 || width > 1920 || height < 100 || height > 1080) {
+      return c.json({ 
+        success: false, 
+        error: 'Invalid dimensions. Width: 100-1920, Height: 100-1080' 
+      }, 400)
+    }
+    
+    // Check cache
+    const cachePath = getCachePath(tid, 'banner', width, height)
+    
+    if (hasCachedImage(cachePath)) {
+      const cachedImage = readFileSync(cachePath)
+      return c.body(cachedImage, 200, {
+        'Content-Type': 'image/jpeg',
+        'X-Cache': 'HIT'
+      })
+    }
+    
+    // Resize image
+    const image = readFileSync(bannerPath)
+    const resizedImage = await sharp(image)
+      .resize(width, height, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .jpeg({ quality: 90 })
+      .toBuffer()
+    
+    // Save to cache
+    writeFileSync(cachePath, resizedImage)
+    
+    return c.body(resizedImage, 200, {
+      'Content-Type': 'image/jpeg',
+      'X-Cache': 'MISS'
+    })
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// Get banner with optional resize (shorthand format)
 nx.get('/:tid/banner/:size?', async (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
