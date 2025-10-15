@@ -78,7 +78,7 @@ function showProgress(current, total, label = 'Progress') {
 async function downloadTitleDB(source) {
   try {
     const url = `${TITLEDB_BASE_URL}/${source.region}.${source.lang}.json`
-    console.log(`Downloading ${source.region}.${source.lang}...`)
+    console.log(`  → Downloading ${source.region}.${source.lang}...`)
     
     const startTime = Date.now()
     
@@ -90,14 +90,17 @@ async function downloadTitleDB(source) {
       throw new Error(`HTTP error: ${response.status}`)
     }
     
+    const contentLength = response.headers.get('content-length')
+    const sizeMB = contentLength ? (parseInt(contentLength) / 1024 / 1024).toFixed(2) : 'unknown'
+    
     const data = await response.json()
     
     const duration = ((Date.now() - startTime) / 1000).toFixed(2)
-    console.log(`✓ Loaded ${source.region}.${source.lang} in ${duration}s (${Object.keys(data).length} entries)`)
+    console.log(`  ✓ Loaded ${source.region}.${source.lang} in ${duration}s (${Object.keys(data).length} entries, ${sizeMB} MB)`)
     
     return data
   } catch (error) {
-    console.error(`✗ Error loading ${source.region}.${source.lang}:`, error.message)
+    console.error(`  ✗ Error loading ${source.region}.${source.lang}:`, error.message)
     return null // Return null instead of throwing to continue with other sources
   }
 }
@@ -122,50 +125,54 @@ async function processTitleDBInBatches(titledb, lang) {
   const MAX_EXAMPLES = 10
   
   // Prepare statements once - ONLY update NULL fields (never overwrite existing data)
-  const checkStmt = db.prepare('SELECT tid FROM nx WHERE tid = ?')
+  const checkStmt = db.prepare('SELECT tid FROM nx WHERE tid = $1')
   const insertGameStmt = db.prepare(`
     INSERT INTO nx (
       tid, name, publisher, developer, release_date, category, languages,
       nsu_id, number_of_players, rating_content, rights_id, region,
       is_demo, console, type, version, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP)
     ON CONFLICT(tid) DO UPDATE SET
-      name = CASE WHEN name IS NULL THEN excluded.name ELSE name END,
-      publisher = CASE WHEN publisher IS NULL THEN excluded.publisher ELSE publisher END,
-      developer = CASE WHEN developer IS NULL THEN excluded.developer ELSE developer END,
-      release_date = CASE WHEN release_date IS NULL THEN excluded.release_date ELSE release_date END,
-      category = CASE WHEN category IS NULL THEN excluded.category ELSE category END,
-      languages = CASE WHEN languages IS NULL THEN excluded.languages ELSE languages END,
-      nsu_id = CASE WHEN nsu_id IS NULL THEN excluded.nsu_id ELSE nsu_id END,
-      number_of_players = CASE WHEN number_of_players IS NULL THEN excluded.number_of_players ELSE number_of_players END,
-      rating_content = CASE WHEN rating_content IS NULL THEN excluded.rating_content ELSE rating_content END,
-      rights_id = CASE WHEN rights_id IS NULL THEN excluded.rights_id ELSE rights_id END,
-      region = CASE WHEN region IS NULL THEN excluded.region ELSE region END,
-      is_demo = CASE WHEN is_demo IS NULL THEN excluded.is_demo ELSE is_demo END,
+      name = CASE WHEN nx.name IS NULL THEN EXCLUDED.name ELSE nx.name END,
+      publisher = CASE WHEN nx.publisher IS NULL THEN EXCLUDED.publisher ELSE nx.publisher END,
+      developer = CASE WHEN nx.developer IS NULL THEN EXCLUDED.developer ELSE nx.developer END,
+      release_date = CASE WHEN nx.release_date IS NULL THEN EXCLUDED.release_date ELSE nx.release_date END,
+      category = CASE WHEN nx.category IS NULL THEN EXCLUDED.category ELSE nx.category END,
+      languages = CASE WHEN nx.languages IS NULL THEN EXCLUDED.languages ELSE nx.languages END,
+      nsu_id = CASE WHEN nx.nsu_id IS NULL THEN EXCLUDED.nsu_id ELSE nx.nsu_id END,
+      number_of_players = CASE WHEN nx.number_of_players IS NULL THEN EXCLUDED.number_of_players ELSE nx.number_of_players END,
+      rating_content = CASE WHEN nx.rating_content IS NULL THEN EXCLUDED.rating_content ELSE nx.rating_content END,
+      rights_id = CASE WHEN nx.rights_id IS NULL THEN EXCLUDED.rights_id ELSE nx.rights_id END,
+      region = CASE WHEN nx.region IS NULL THEN EXCLUDED.region ELSE nx.region END,
+      is_demo = CASE WHEN nx.is_demo IS NULL THEN EXCLUDED.is_demo ELSE nx.is_demo END,
       updated_at = CURRENT_TIMESTAMP
   `)
   
   // Dynamic description statement per language
   const insertDescStmt = db.prepare(`
     INSERT INTO nx_${lang} (tid, intro, description)
-    VALUES (?, ?, ?)
+    VALUES ($1, $2, $3)
     ON CONFLICT(tid) DO UPDATE SET
-      intro = CASE WHEN intro IS NULL THEN excluded.intro ELSE intro END,
-      description = CASE WHEN description IS NULL THEN excluded.description ELSE description END
+      intro = CASE WHEN nx_${lang}.intro IS NULL THEN EXCLUDED.intro ELSE nx_${lang}.intro END,
+      description = CASE WHEN nx_${lang}.description IS NULL THEN EXCLUDED.description ELSE nx_${lang}.description END
   `)
   
   // Process in batches with transactions
+  console.log(`  → Processing ${totalEntries} entries in ${Math.ceil(totalEntries / BATCH_SIZE)} batches...`)
+  
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const batch = entries.slice(i, i + BATCH_SIZE)
     const batchNum = Math.floor(i / BATCH_SIZE) + 1
     const totalBatches = Math.ceil(totalEntries / BATCH_SIZE)
+    const percentage = ((i + batch.length) / totalEntries * 100).toFixed(1)
     
-    console.log(`Processing batch ${batchNum}/${totalBatches} (${batch.length} entries)`)
+    console.log(`    Batch ${batchNum}/${totalBatches} (${percentage}%): processing ${batch.length} entries...`)
     
     // Collect games that might need media download (only for English to avoid duplicates)
     const gamesForMedia = []
+    const batchStartTime = Date.now()
     
-    const processBatch = db.transaction(() => {
+    const processBatch = db.transaction(async () => {
       for (const [nsuId, gameData] of batch) {
         const tid = gameData.id
         
@@ -184,7 +191,7 @@ async function processTitleDBInBatches(titledb, lang) {
         }
         
         // Check if game exists
-        const existingGame = checkStmt.get(tid)
+        const existingGame = await checkStmt.get(tid)
         
         if (existingGame) {
           updated++
@@ -198,7 +205,7 @@ async function processTitleDBInBatches(titledb, lang) {
         }
         
         // Insert/update game data
-        insertGameStmt.run(
+        await insertGameStmt.run(
           tid,
           gameData.name || null,
           gameData.publisher || null,
@@ -218,7 +225,7 @@ async function processTitleDBInBatches(titledb, lang) {
         )
         
         // Insert/update description
-        insertDescStmt.run(
+        await insertDescStmt.run(
           tid,
           gameData.intro || null,
           gameData.description || null
@@ -228,12 +235,15 @@ async function processTitleDBInBatches(titledb, lang) {
       }
     })
     
-    processBatch()
+    await processBatch()
+    
+    const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(2)
+    console.log(`    ✓ Batch ${batchNum} completed in ${batchDuration}s`)
     
     // Download missing media (outside transaction, async)
     // Only for English sources to avoid downloading duplicates
     if (gamesForMedia.length > 0 && lang === 'en') {
-      console.log(`  Checking media for ${gamesForMedia.length} games...`)
+      console.log(`    → Checking media for ${gamesForMedia.length} games...`)
       
       for (const { tid, gameData } of gamesForMedia) {
         // downloadGameMedia already checks if files exist before downloading
@@ -245,10 +255,12 @@ async function processTitleDBInBatches(titledb, lang) {
       }
       
       if (mediaDownloaded > 0) {
-        console.log(`  ✓ Downloaded media for ${mediaDownloaded} games`)
+        console.log(`    ✓ Media downloaded for ${mediaDownloaded} games`)
       }
     }
   }
+  
+  console.log(`  ✓ Processing completed: ${processed} processed, ${added} new, ${updated} updated, ${skipped} skipped`)
   
   return { processed, added, updated, skipped, mediaDownloaded, skippedExamples }
 }
@@ -279,17 +291,17 @@ export async function syncTitleDB() {
     })
     
     // Process each source
-    for (const source of TITLEDB_SOURCES) {
-      console.log(`\n--- Syncing ${source.region}.${source.lang} ---`)
+    for (let idx = 0; idx < TITLEDB_SOURCES.length; idx++) {
+      const source = TITLEDB_SOURCES[idx]
+      console.log(`\n[${idx + 1}/${TITLEDB_SOURCES.length}] Syncing ${source.region}.${source.lang}`)
       
       const titledb = await downloadTitleDB(source)
       
       if (!titledb) {
-        console.log(`⚠ Skipping ${source.region}.${source.lang} (download failed)`)
+        console.log(`  ⚠ Skipping ${source.region}.${source.lang} (download failed)`)
         continue
       }
       
-      console.log('Processing entries...')
       const result = await processTitleDBInBatches(titledb, source.lang)
       
       totalProcessed += result.processed
@@ -302,7 +314,7 @@ export async function syncTitleDB() {
         allSkippedExamples.push(...result.skippedExamples.slice(0, 10 - allSkippedExamples.length))
       }
       
-      console.log(`✓ ${source.region}.${source.lang}: ${result.processed} games (${result.added} new, ${result.updated} updated)`)
+      console.log(`  ✓ Completed ${source.region}.${source.lang}: ${result.processed} games (${result.added} new, ${result.updated} updated)`)
     }
     
     const totalDuration = ((Date.now() - overallStart) / 1000).toFixed(2)
@@ -324,9 +336,9 @@ export async function syncTitleDB() {
     
     // Log sync
     const logStmt = db.prepare(`
-      INSERT INTO sync_log (games_count, status, source) VALUES (?, ?, ?)
+      INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)
     `)
-    logStmt.run(totalProcessed, 'success', 'titledb-multi')
+    await logStmt.run(totalProcessed, 'success', 'titledb-multi')
     
     return {
       success: true,
@@ -343,9 +355,9 @@ export async function syncTitleDB() {
     
     // Log failed sync
     const logStmt = db.prepare(`
-      INSERT INTO sync_log (games_count, status, source) VALUES (?, ?, ?)
+      INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)
     `)
-    logStmt.run(0, 'failed', 'titledb-multi')
+    await logStmt.run(0, 'failed', 'titledb-multi')
     
     return {
       success: false,

@@ -1,3 +1,4 @@
+import dotenv from 'dotenv'
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
@@ -7,6 +8,9 @@ import { dirname, join } from 'path'
 import uptime from './routes/uptime.js'
 import nx from './routes/nx.js'
 import { startScheduler } from './services/scheduler.js'
+
+// Load environment variables
+dotenv.config()
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -104,6 +108,7 @@ startScheduler()
 const port = Number(process.env.PORT) || 3000
 serve({ fetch: app.fetch, port }, () => {
   console.log(`Server running on http://localhost:${port}`)
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
 })
 
 

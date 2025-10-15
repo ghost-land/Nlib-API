@@ -273,21 +273,21 @@ nx.get('/:tid/screens', (c) => {
 })
 
 // Get stats (must be before /:tid to avoid conflicts)
-nx.get('/stats', (c) => {
+nx.get('/stats', async (c) => {
   try {
     // Total games count
-    const totalGames = getGamesCount()
-    const lastSync = getLastSync()
+    const totalGames = await getGamesCount()
+    const lastSync = await getLastSync()
     
     // Games by type
-    const typeStats = db.prepare(`
+    const typeStats = await db.prepare(`
       SELECT type, COUNT(*) as count
       FROM nx
       GROUP BY type
     `).all()
     
     // Games vs Demos
-    const demoStats = db.prepare(`
+    const demoStats = await db.prepare(`
       SELECT 
         SUM(CASE WHEN is_demo = 1 THEN 1 ELSE 0 END) as demos,
         SUM(CASE WHEN is_demo = 0 THEN 1 ELSE 0 END) as games
@@ -295,7 +295,7 @@ nx.get('/stats', (c) => {
     `).get()
     
     // Games by region
-    const regionStats = db.prepare(`
+    const regionStats = await db.prepare(`
       SELECT region, COUNT(*) as count
       FROM nx
       WHERE region IS NOT NULL
@@ -304,14 +304,14 @@ nx.get('/stats', (c) => {
     `).all()
     
     // Games by console
-    const consoleStats = db.prepare(`
+    const consoleStats = await db.prepare(`
       SELECT console, COUNT(*) as count
       FROM nx
       GROUP BY console
     `).all()
     
     // Top 10 publishers
-    const topPublishers = db.prepare(`
+    const topPublishers = await db.prepare(`
       SELECT publisher, COUNT(*) as count
       FROM nx
       WHERE publisher IS NOT NULL AND publisher != ''
@@ -321,7 +321,7 @@ nx.get('/stats', (c) => {
     `).all()
     
     // Most recent games added/updated
-    const recentGames = db.prepare(`
+    const recentGames = await db.prepare(`
       SELECT tid, name, updated_at
       FROM nx
       ORDER BY updated_at DESC
@@ -369,7 +369,7 @@ nx.get('/stats', (c) => {
 })
 
 // Get game by TID
-nx.get('/:tid', (c) => {
+nx.get('/:tid', async (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
     const lang = c.req.query('lang') || 'en' // Default to English
@@ -431,10 +431,10 @@ nx.get('/:tid', (c) => {
       query += ` LEFT JOIN nx_${selectedLang} e ON g.tid = e.tid`
     }
     
-    query += ` WHERE g.tid = ?`
+    query += ` WHERE g.tid = $1`
     
     const gameStmt = db.prepare(query)
-    const game = gameStmt.get(tid)
+    const game = await gameStmt.get(tid)
     
     if (!game) {
       return c.json({

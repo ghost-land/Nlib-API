@@ -1,7 +1,5 @@
 node_modules/
-*.log
 .env
-.DS_Store
-data/
 media/
-
+*.log
+.DS_Store

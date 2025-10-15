@@ -60,30 +60,59 @@ async function downloadTIDs() {
  * Sync TIDs to database
  * @param {string[]} tids - Array of TIDs to sync
  */
-function syncToDatabase(tids) {
-  const insertStmt = db.prepare(`
-    INSERT OR IGNORE INTO nx (tid) VALUES (?)
-  `)
+async function syncToDatabase(tids) {
+  console.log(`Syncing ${tids.length} TIDs to database...`)
   
-  const insertMany = db.transaction((tids) => {
-    let count = 0
-    for (const tid of tids) {
-      const result = insertStmt.run(tid)
-      count += result.changes
+  const BATCH_SIZE = 1000
+  const totalBatches = Math.ceil(tids.length / BATCH_SIZE)
+  let totalInserted = 0
+  
+  for (let i = 0; i < tids.length; i += BATCH_SIZE) {
+    const batch = tids.slice(i, i + BATCH_SIZE)
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1
+    
+    console.log(`  Processing batch ${batchNum}/${totalBatches}...`)
+    
+    // Use direct pool query for better control
+    const client = await db.pool.connect()
+    try {
+      await client.query('BEGIN')
+      
+      let count = 0
+      for (const tid of batch) {
+        const result = await client.query(
+          'INSERT INTO nx (tid) VALUES ($1) ON CONFLICT (tid) DO NOTHING',
+          [tid]
+        )
+        count += result.rowCount
+      }
+      
+      await client.query('COMMIT')
+      totalInserted += count
+      
+      console.log(`  ✓ Batch ${batchNum}/${totalBatches}: ${count} new games added (${i + batch.length}/${tids.length} processed)`)
+    } catch (error) {
+      await client.query('ROLLBACK')
+      console.error(`  ✗ Error in batch ${batchNum}:`, error.message)
+      throw error
+    } finally {
+      client.release()
     }
-    return count
-  })
+  }
   
-  const inserted = insertMany(tids)
-  console.log(`Added ${inserted} new games to database`)
+  console.log(`✓ Total: ${totalInserted} new games added to database`)
   
   // Log sync
-  const logStmt = db.prepare(`
-    INSERT INTO sync_log (games_count, status, source) VALUES (?, ?, ?)
-  `)
-  logStmt.run(tids.length, 'success', 'nx_tids')
+  try {
+    await db.pool.query(
+      'INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)',
+      [tids.length, 'success', 'nx_tids']
+    )
+  } catch (error) {
+    console.error('Error logging sync:', error.message)
+  }
   
-  return inserted
+  return totalInserted
 }
 
 /**
@@ -95,7 +124,7 @@ export async function syncNXGames() {
     const startTime = Date.now()
     
     const tids = await downloadTIDs()
-    const inserted = syncToDatabase(tids)
+    const inserted = await syncToDatabase(tids)
     
     const duration = Date.now() - startTime
     console.log(`Synchronization completed in ${duration}ms`)
@@ -112,9 +141,9 @@ export async function syncNXGames() {
     
     // Log failed sync
     const logStmt = db.prepare(`
-      INSERT INTO sync_log (games_count, status, source) VALUES (?, ?, ?)
+      INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)
     `)
-    logStmt.run(0, 'failed', 'nx_tids')
+    await logStmt.run(0, 'failed', 'nx_tids')
     
     return {
       success: false,
@@ -126,24 +155,25 @@ export async function syncNXGames() {
 /**
  * Get game by TID
  */
-export function getGameByTID(tid) {
-  const stmt = db.prepare('SELECT tid FROM nx WHERE tid = ?')
-  return stmt.get(tid)
+export async function getGameByTID(tid) {
+  const stmt = db.prepare('SELECT tid FROM nx WHERE tid = $1')
+  return await stmt.get(tid)
 }
 
 /**
  * Get games count
  */
-export function getGamesCount() {
+export async function getGamesCount() {
   const stmt = db.prepare('SELECT COUNT(*) as count FROM nx')
-  return stmt.get().count
+  const result = await stmt.get()
+  return parseInt(result.count)
 }
 
 /**
  * Get last sync info
  */
-export function getLastSync() {
+export async function getLastSync() {
   const stmt = db.prepare('SELECT * FROM sync_log ORDER BY synced_at DESC LIMIT 1')
-  return stmt.get()
+  return await stmt.get()
 }
 
