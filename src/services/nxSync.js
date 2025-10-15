@@ -62,7 +62,7 @@ async function downloadTIDs() {
  */
 function syncToDatabase(tids) {
   const insertStmt = db.prepare(`
-    INSERT OR IGNORE INTO games (tid) VALUES (?)
+    INSERT OR IGNORE INTO nx (tid) VALUES (?)
   `)
   
   const insertMany = db.transaction((tids) => {
@@ -127,7 +127,7 @@ export async function syncNXGames() {
  * Get game by TID
  */
 export function getGameByTID(tid) {
-  const stmt = db.prepare('SELECT tid FROM games WHERE tid = ?')
+  const stmt = db.prepare('SELECT tid FROM nx WHERE tid = ?')
   return stmt.get(tid)
 }
 
@@ -135,7 +135,7 @@ export function getGameByTID(tid) {
  * Get games count
  */
 export function getGamesCount() {
-  const stmt = db.prepare('SELECT COUNT(*) as count FROM games')
+  const stmt = db.prepare('SELECT COUNT(*) as count FROM nx')
   return stmt.get().count
 }
 

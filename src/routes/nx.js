@@ -282,7 +282,7 @@ nx.get('/stats', (c) => {
     // Games by type
     const typeStats = db.prepare(`
       SELECT type, COUNT(*) as count
-      FROM games
+      FROM nx
       GROUP BY type
     `).all()
     
@@ -291,13 +291,13 @@ nx.get('/stats', (c) => {
       SELECT 
         SUM(CASE WHEN is_demo = 1 THEN 1 ELSE 0 END) as demos,
         SUM(CASE WHEN is_demo = 0 THEN 1 ELSE 0 END) as games
-      FROM games
+      FROM nx
     `).get()
     
     // Games by region
     const regionStats = db.prepare(`
       SELECT region, COUNT(*) as count
-      FROM games
+      FROM nx
       WHERE region IS NOT NULL
       GROUP BY region
       ORDER BY count DESC
@@ -306,14 +306,14 @@ nx.get('/stats', (c) => {
     // Games by console
     const consoleStats = db.prepare(`
       SELECT console, COUNT(*) as count
-      FROM games
+      FROM nx
       GROUP BY console
     `).all()
     
     // Top 10 publishers
     const topPublishers = db.prepare(`
       SELECT publisher, COUNT(*) as count
-      FROM games
+      FROM nx
       WHERE publisher IS NOT NULL AND publisher != ''
       GROUP BY publisher
       ORDER BY count DESC
@@ -323,7 +323,7 @@ nx.get('/stats', (c) => {
     // Most recent games added/updated
     const recentGames = db.prepare(`
       SELECT tid, name, updated_at
-      FROM games
+      FROM nx
       ORDER BY updated_at DESC
       LIMIT 5
     `).all()
@@ -425,7 +425,7 @@ nx.get('/:tid', (c) => {
       .join(', ')
     
     // Build query
-    let query = `SELECT ${selectFields} FROM games g`
+    let query = `SELECT ${selectFields} FROM nx g`
     
     if (needsJoin) {
       query += ` LEFT JOIN nx_${selectedLang} e ON g.tid = e.tid`

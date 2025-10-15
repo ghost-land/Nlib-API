@@ -122,9 +122,9 @@ async function processTitleDBInBatches(titledb, lang) {
   const MAX_EXAMPLES = 10
   
   // Prepare statements once - ONLY update NULL fields (never overwrite existing data)
-  const checkStmt = db.prepare('SELECT tid FROM games WHERE tid = ?')
+  const checkStmt = db.prepare('SELECT tid FROM nx WHERE tid = ?')
   const insertGameStmt = db.prepare(`
-    INSERT INTO games (
+    INSERT INTO nx (
       tid, name, publisher, developer, release_date, category, languages,
       nsu_id, number_of_players, rating_content, rights_id, region,
       is_demo, console, type, version, updated_at

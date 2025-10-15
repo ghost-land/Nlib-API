@@ -20,9 +20,9 @@ db.pragma('foreign_keys = ON')
 
 // Initialize database schema
 function initDatabase() {
-  // Create games table with all metadata
+  // Create nx table with all metadata
   db.exec(`
-    CREATE TABLE IF NOT EXISTS games (
+    CREATE TABLE IF NOT EXISTS nx (
       tid TEXT PRIMARY KEY,
       name TEXT,
       publisher TEXT,
@@ -45,7 +45,7 @@ function initDatabase() {
 
   // Create index on tid
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_games_tid ON games(tid)
+    CREATE INDEX IF NOT EXISTS idx_nx_tid ON nx(tid)
   `)
 
   // Create descriptions tables for each language
@@ -57,7 +57,7 @@ function initDatabase() {
         tid TEXT PRIMARY KEY,
         intro TEXT,
         description TEXT,
-        FOREIGN KEY (tid) REFERENCES games(tid)
+        FOREIGN KEY (tid) REFERENCES nx(tid)
       )
     `)
   })
