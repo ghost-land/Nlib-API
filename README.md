@@ -2,19 +2,14 @@
 
 A modern and performant REST API for Nintendo game library data. Access game information, media assets, screenshots, and comprehensive statistics across Nintendo platforms.
 
-<div align="center">
-
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![API Status](https://img.shields.io/badge/status-online-success.svg)](https://api.nlib.cc/uptime)
-
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%3E%3D12-316192.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 [![GitHub Stars](https://img.shields.io/github/stars/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/commits)
-
-</div>
 
 ## Features
 
