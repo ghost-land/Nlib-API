@@ -24,9 +24,9 @@ const TITLEDB_SOURCES = [
 ]
 
 /**
- * Format date from YYYYMMDD to YYYY-MM-DD
+ * Convert YYYYMMDD to YYYY-MM-DD format
  * @param {number|string} dateNum - Date in YYYYMMDD format
- * @returns {string|null} - Date in YYYY-MM-DD format
+ * @returns {string|null} - ISO date string or null
  */
 function formatReleaseDate(dateNum) {
   if (!dateNum) return null
@@ -34,46 +34,22 @@ function formatReleaseDate(dateNum) {
   const dateStr = dateNum.toString()
   if (dateStr.length !== 8) return null
   
-  const year = dateStr.substring(0, 4)
-  const month = dateStr.substring(4, 6)
-  const day = dateStr.substring(6, 8)
-  
-  return `${year}-${month}-${day}`
+  return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`
 }
 
 /**
- * Check if TID is a valid base game
- * @param {string} tid - Title ID
- * @returns {boolean}
+ * Validate Title ID format for base games
+ * @param {string} tid - Title ID to validate
+ * @returns {boolean} - True if valid base game TID
  */
 function isValidBaseTID(tid) {
-  if (!tid || tid.length !== 16) return false
-  return tid.startsWith('01') && tid.endsWith('000')
+  return tid?.length === 16 && tid.startsWith('01') && tid.endsWith('000')
 }
 
 /**
- * Show progress bar in console
- */
-function showProgress(current, total, label = 'Progress') {
-  if (!total || total <= 0 || !current || current < 0) {
-    return
-  }
-  
-  const percentage = Math.min(100, Math.floor((current / total) * 100))
-  const barLength = 40
-  const filledLength = Math.max(0, Math.min(barLength, Math.floor((barLength * current) / total)))
-  const emptyLength = Math.max(0, barLength - filledLength)
-  const bar = '█'.repeat(filledLength) + '░'.repeat(emptyLength)
-  process.stdout.write(`\r${label}: [${bar}] ${percentage}%`)
-  if (current >= total) {
-    process.stdout.write('\n')
-  }
-}
-
-/**
- * Download and parse titledb JSON for a specific source
- * @param {Object} source - Source config {region, lang}
- * @returns {Promise<Object>} - Parsed JSON object
+ * Fetch and parse TitleDB JSON for specified region/language
+ * @param {Object} source - Source configuration {region, lang, priority}
+ * @returns {Promise<Object|null>} - Parsed TitleDB data or null on error
  */
 async function downloadTitleDB(source) {
   try {
@@ -101,15 +77,17 @@ async function downloadTitleDB(source) {
     return data
   } catch (error) {
     console.error(`  ✗ Error loading ${source.region}.${source.lang}:`, error.message)
-    return null // Return null instead of throwing to continue with other sources
+    return null
   }
 }
 
 /**
- * Process games in batches for better performance
- * RULE: Only update fields that are currently NULL - never overwrite existing data
- * @param {Object} titledb - Full titledb object
- * @param {string} lang - Language code (en, ja, es, etc.)
+ * Process TitleDB entries in batches with transactions
+ * Updates only NULL fields - preserves existing data
+ * Downloads missing media files from all sources
+ * @param {Object} titledb - TitleDB JSON data
+ * @param {string} lang - Language code (en, ja, es, de, fr, nl, pt, it, zh, ko, ru)
+ * @returns {Promise<Object>} - Processing statistics
  */
 async function processTitleDBInBatches(titledb, lang) {
   const BATCH_SIZE = 1000
@@ -121,10 +99,10 @@ async function processTitleDBInBatches(titledb, lang) {
   let updated = 0
   let skipped = 0
   let mediaDownloaded = 0
-  const skippedExamples = [] // Store varied examples
+  const skippedExamples = []
   const MAX_EXAMPLES = 10
   
-  // Prepare statements once - ONLY update NULL fields (never overwrite existing data)
+  // Prepare statements - only update NULL fields
   const checkStmt = db.prepare('SELECT tid FROM nx WHERE tid = $1')
   const insertGameStmt = db.prepare(`
     INSERT INTO nx (
@@ -157,7 +135,6 @@ async function processTitleDBInBatches(titledb, lang) {
       description = CASE WHEN nx_${lang}.description IS NULL THEN EXCLUDED.description ELSE nx_${lang}.description END
   `)
   
-  // Process in batches with transactions
   console.log(`  → Processing ${totalEntries} entries in ${Math.ceil(totalEntries / BATCH_SIZE)} batches...`)
   
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
@@ -168,7 +145,6 @@ async function processTitleDBInBatches(titledb, lang) {
     
     console.log(`    Batch ${batchNum}/${totalBatches} (${percentage}%): processing ${batch.length} entries...`)
     
-    // Collect games that might need media download (only for English to avoid duplicates)
     const gamesForMedia = []
     const batchStartTime = Date.now()
     
@@ -176,10 +152,8 @@ async function processTitleDBInBatches(titledb, lang) {
       for (const [nsuId, gameData] of batch) {
         const tid = gameData.id
         
-        // Check if TID is valid
         if (!tid || !isValidBaseTID(tid)) {
           skipped++
-          // Store varied examples of skipped TIDs (sample every ~1500 to get variety)
           if (skippedExamples.length < MAX_EXAMPLES && tid && skipped % 1500 === 1) {
             const reason = !tid.startsWith('01') ? 'not-switch' :
                           tid.endsWith('800') ? 'update' :
@@ -190,7 +164,6 @@ async function processTitleDBInBatches(titledb, lang) {
           continue
         }
         
-        // Check if game exists
         const existingGame = await checkStmt.get(tid)
         
         if (existingGame) {
@@ -199,12 +172,12 @@ async function processTitleDBInBatches(titledb, lang) {
           added++
         }
         
-        // Collect game for media download check (only for English source)
-        if (lang === 'en' && gameData.iconUrl) {
+        // Queue games with media URLs for download
+        if (gameData.iconUrl || gameData.bannerUrl || (gameData.screenshots && gameData.screenshots.length > 0)) {
           gamesForMedia.push({ tid, gameData })
         }
         
-        // Insert/update game data
+        // Insert or update game metadata
         await insertGameStmt.run(
           tid,
           gameData.name || null,
@@ -224,7 +197,7 @@ async function processTitleDBInBatches(titledb, lang) {
           gameData.version || 0
         )
         
-        // Insert/update description
+        // Insert or update localized description
         await insertDescStmt.run(
           tid,
           gameData.intro || null,
@@ -240,22 +213,22 @@ async function processTitleDBInBatches(titledb, lang) {
     const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(2)
     console.log(`    ✓ Batch ${batchNum} completed in ${batchDuration}s`)
     
-    // Download missing media (outside transaction, async)
-    // Only for English sources to avoid downloading duplicates
-    if (gamesForMedia.length > 0 && lang === 'en') {
+    // Download missing media files
+    if (gamesForMedia.length > 0) {
       console.log(`    → Checking media for ${gamesForMedia.length} games...`)
       
+      let newMediaCount = 0
       for (const { tid, gameData } of gamesForMedia) {
-        // downloadGameMedia already checks if files exist before downloading
         const result = await downloadGameMedia(tid, gameData)
-        // Count as downloaded if we got at least one media file
         if (result.icon || result.banner || result.screenshots > 0) {
-          mediaDownloaded++
+          newMediaCount++
         }
       }
       
-      if (mediaDownloaded > 0) {
-        console.log(`    ✓ Media downloaded for ${mediaDownloaded} games`)
+      mediaDownloaded += newMediaCount
+      
+      if (newMediaCount > 0) {
+        console.log(`    ✓ Media downloaded for ${newMediaCount} games from ${lang.toUpperCase()} source`)
       }
     }
   }
@@ -266,7 +239,10 @@ async function processTitleDBInBatches(titledb, lang) {
 }
 
 /**
- * Main titledb sync function - syncs all sources
+ * Synchronize game data from all TitleDB sources
+ * Processes sources by priority, updates NULL fields only
+ * Downloads missing media from all sources
+ * @returns {Promise<Object>} - Sync results with statistics
  */
 export async function syncTitleDB() {
   try {
@@ -281,16 +257,6 @@ export async function syncTitleDB() {
     let totalMediaDownloaded = 0
     const allSkippedExamples = []
     
-    // Group sources by language for better logging
-    const sourcesByLang = {}
-    TITLEDB_SOURCES.forEach(source => {
-      if (!sourcesByLang[source.lang]) {
-        sourcesByLang[source.lang] = []
-      }
-      sourcesByLang[source.lang].push(source)
-    })
-    
-    // Process each source
     for (let idx = 0; idx < TITLEDB_SOURCES.length; idx++) {
       const source = TITLEDB_SOURCES[idx]
       console.log(`\n[${idx + 1}/${TITLEDB_SOURCES.length}] Syncing ${source.region}.${source.lang}`)
@@ -353,7 +319,6 @@ export async function syncTitleDB() {
   } catch (error) {
     console.error('TitleDB synchronization error:', error)
     
-    // Log failed sync
     const logStmt = db.prepare(`
       INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)
     `)

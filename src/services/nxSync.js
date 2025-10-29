@@ -3,9 +3,9 @@ import db from '../database/init.js'
 const SOURCE_URL = 'https://nx-missing.ghostland.at/data/working.txt'
 
 /**
- * Parse TID line and check if it's a valid base game
- * @param {string} line - Line from the file (format: TID|number)
- * @returns {string|null} - TID if valid, null otherwise
+ * Parse and validate Title ID from working.txt line
+ * @param {string} line - Line format: TID|number
+ * @returns {string|null} - Valid base game TID or null
  */
 function parseTID(line) {
   const parts = line.split('|')
@@ -13,20 +13,17 @@ function parseTID(line) {
   
   const tid = parts[0].trim()
   
-  // Check if TID starts with '01' and ends with '000'
-  if (tid.startsWith('01') && tid.endsWith('000')) {
-    // Check if TID has valid length (16 characters)
-    if (tid.length === 16) {
-      return tid
-    }
+  // Base games: 16 chars, start with '01', end with '000'
+  if (tid.length === 16 && tid.startsWith('01') && tid.endsWith('000')) {
+    return tid
   }
   
   return null
 }
 
 /**
- * Download and parse the working.txt file
- * @returns {Promise<string[]>} - Array of valid TIDs
+ * Fetch and parse working.txt for base game TIDs
+ * @returns {Promise<string[]>} - Array of valid base game TIDs
  */
 async function downloadTIDs() {
   try {
@@ -40,13 +37,9 @@ async function downloadTIDs() {
     const text = await response.text()
     const lines = text.split('\n')
     
-    const tids = []
-    for (const line of lines) {
-      const tid = parseTID(line)
-      if (tid) {
-        tids.push(tid)
-      }
-    }
+    const tids = lines
+      .map(line => parseTID(line))
+      .filter(tid => tid !== null)
     
     console.log(`Found ${tids.length} valid TIDs`)
     return tids
@@ -57,8 +50,9 @@ async function downloadTIDs() {
 }
 
 /**
- * Sync TIDs to database
- * @param {string[]} tids - Array of TIDs to sync
+ * Insert TIDs into database in batches
+ * @param {string[]} tids - Array of Title IDs
+ * @returns {Promise<number>} - Number of new entries inserted
  */
 async function syncToDatabase(tids) {
   console.log(`Syncing ${tids.length} TIDs to database...`)
@@ -73,7 +67,6 @@ async function syncToDatabase(tids) {
     
     console.log(`  Processing batch ${batchNum}/${totalBatches}...`)
     
-    // Use direct pool query for better control
     const client = await db.pool.connect()
     try {
       await client.query('BEGIN')
@@ -102,7 +95,6 @@ async function syncToDatabase(tids) {
   
   console.log(`✓ Total: ${totalInserted} new games added to database`)
   
-  // Log sync
   try {
     await db.pool.query(
       'INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)',
@@ -116,7 +108,8 @@ async function syncToDatabase(tids) {
 }
 
 /**
- * Main sync function
+ * Synchronize Nintendo Switch TIDs from nx-missing source
+ * @returns {Promise<Object>} - Sync results with success status
  */
 export async function syncNXGames() {
   try {
@@ -139,7 +132,6 @@ export async function syncNXGames() {
   } catch (error) {
     console.error('Synchronization error:', error)
     
-    // Log failed sync
     const logStmt = db.prepare(`
       INSERT INTO sync_log (games_count, status, source) VALUES ($1, $2, $3)
     `)
@@ -153,7 +145,9 @@ export async function syncNXGames() {
 }
 
 /**
- * Get game by TID
+ * Retrieve game by Title ID
+ * @param {string} tid - Title ID
+ * @returns {Promise<Object|null>} - Game data or null
  */
 export async function getGameByTID(tid) {
   const stmt = db.prepare('SELECT tid FROM nx WHERE tid = $1')
@@ -161,7 +155,8 @@ export async function getGameByTID(tid) {
 }
 
 /**
- * Get games count
+ * Get total number of games in database
+ * @returns {Promise<number>} - Total game count
  */
 export async function getGamesCount() {
   const stmt = db.prepare('SELECT COUNT(*) as count FROM nx')
@@ -170,7 +165,8 @@ export async function getGamesCount() {
 }
 
 /**
- * Get last sync info
+ * Get most recent synchronization log entry
+ * @returns {Promise<Object|null>} - Last sync log or null
  */
 export async function getLastSync() {
   const stmt = db.prepare('SELECT * FROM sync_log ORDER BY synced_at DESC LIMIT 1')

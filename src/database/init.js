@@ -6,7 +6,7 @@ dotenv.config()
 
 const { Pool } = pg
 
-// Log configuration (password hidden)
+// Display connection configuration
 console.log('=== PostgreSQL Configuration ===')
 console.log('Host:', process.env.DB_HOST)
 console.log('Port:', process.env.DB_PORT || '5432')
@@ -18,7 +18,7 @@ if (process.env.DB_SSL === 'true') {
 }
 console.log('================================\n')
 
-// Create PostgreSQL connection pool
+// Initialize connection pool
 const poolConfig = {
   host: process.env.DB_HOST,
   port: parseInt(process.env.DB_PORT || '5432'),
@@ -28,30 +28,19 @@ const poolConfig = {
   ssl: process.env.DB_SSL === 'true' ? {
     rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
   } : false,
-  max: 20, // Maximum number of clients in the pool
+  max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Increased to 10 seconds
+  connectionTimeoutMillis: 10000,
 }
 
 console.log('Creating connection pool...')
 const pool = new Pool(poolConfig)
 
-// Test connection
+// Pool event handlers
 pool.on('connect', (client) => {
-  // Log only if debug enabled
   if (process.env.DB_DEBUG === 'true') {
     console.log('✓ New connection established to PostgreSQL pool')
   }
-})
-
-pool.on('acquire', (client) => {
-  // Log disabled to avoid verbosity
-  // console.log('→ Client acquired from pool')
-})
-
-pool.on('remove', (client) => {
-  // Log disabled to avoid verbosity
-  // console.log('← Client removed from pool')
 })
 
 pool.on('error', (err, client) => {
@@ -61,7 +50,10 @@ pool.on('error', (err, client) => {
   }
 })
 
-// Helper function to prepare statements (compatibility layer)
+/**
+ * PreparedStatement wrapper for PostgreSQL queries
+ * Provides SQLite-like interface for query methods
+ */
 class PreparedStatement {
   constructor(sql) {
     this.sql = sql
@@ -86,21 +78,21 @@ class PreparedStatement {
   }
 }
 
-// Database wrapper with compatibility methods
+/**
+ * Database interface wrapper
+ * Provides unified API for database operations
+ */
 const db = {
   pool,
   
-  // Prepare a statement (async compatible)
   prepare(sql) {
     return new PreparedStatement(sql)
   },
   
-  // Execute raw SQL (for migrations, etc)
   async exec(sql) {
     await pool.query(sql)
   },
   
-  // Transaction helper
   transaction(fn) {
     return async (...args) => {
       const client = await pool.connect()
@@ -119,7 +111,10 @@ const db = {
   }
 }
 
-// Check database connection
+/**
+ * Verify database connection and display server information
+ * Exits process if connection fails
+ */
 async function checkConnection() {
   console.log('Testing PostgreSQL connection...')
   try {
@@ -169,7 +164,6 @@ async function checkConnection() {
   }
 }
 
-// Initialize database on import
 checkConnection()
 
 export default db

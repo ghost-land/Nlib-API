@@ -8,39 +8,35 @@ const __dirname = dirname(__filename)
 
 const MEDIA_DIR = join(__dirname, '..', '..', 'media')
 
-// Ensure media directory exists
 if (!existsSync(MEDIA_DIR)) {
   mkdirSync(MEDIA_DIR, { recursive: true })
 }
 
 /**
- * Download image from URL
+ * Fetch image from URL with timeout
  * @param {string} url - Image URL
- * @returns {Promise<Buffer|null>} - Image buffer or null if failed
+ * @returns {Promise<Buffer|null>} - Image buffer or null on failure
  */
 async function downloadImage(url) {
   try {
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(30000) // 30 seconds timeout
+      signal: AbortSignal.timeout(30000)
     })
     
-    if (!response.ok) {
-      return null
-    }
+    if (!response.ok) return null
     
     const arrayBuffer = await response.arrayBuffer()
     return Buffer.from(arrayBuffer)
   } catch (error) {
-    // Silently fail for individual images
     return null
   }
 }
 
 /**
- * Download and save game icon
+ * Download and save game icon if not present
  * @param {string} tid - Title ID
- * @param {string} iconUrl - Icon URL
- * @returns {Promise<boolean>} - Success status
+ * @param {string} iconUrl - Icon URL from TitleDB
+ * @returns {Promise<boolean>} - True if downloaded or exists
  */
 export async function downloadIcon(tid, iconUrl) {
   if (!iconUrl) return false
@@ -52,10 +48,7 @@ export async function downloadIcon(tid, iconUrl) {
   
   const iconPath = join(tidDir, 'icon')
   
-  // Skip if already exists (never overwrite)
-  if (existsSync(iconPath)) {
-    return true
-  }
+  if (existsSync(iconPath)) return true
   
   const imageData = await downloadImage(iconUrl)
   if (!imageData) return false
@@ -65,10 +58,10 @@ export async function downloadIcon(tid, iconUrl) {
 }
 
 /**
- * Download and save game banner
+ * Download and save game banner if not present
  * @param {string} tid - Title ID
- * @param {string} bannerUrl - Banner URL
- * @returns {Promise<boolean>} - Success status
+ * @param {string} bannerUrl - Banner URL from TitleDB
+ * @returns {Promise<boolean>} - True if downloaded or exists
  */
 export async function downloadBanner(tid, bannerUrl) {
   if (!bannerUrl) return false
@@ -80,10 +73,7 @@ export async function downloadBanner(tid, bannerUrl) {
   
   const bannerPath = join(tidDir, 'banner')
   
-  // Skip if already exists (never overwrite)
-  if (existsSync(bannerPath)) {
-    return true
-  }
+  if (existsSync(bannerPath)) return true
   
   const imageData = await downloadImage(bannerUrl)
   if (!imageData) return false
@@ -93,15 +83,13 @@ export async function downloadBanner(tid, bannerUrl) {
 }
 
 /**
- * Download and save game screenshots
+ * Download and save game screenshots if not present
  * @param {string} tid - Title ID
- * @param {Array<string>} screenshots - Array of screenshot URLs
- * @returns {Promise<number>} - Number of screenshots downloaded
+ * @param {Array<string>} screenshots - Screenshot URLs from TitleDB
+ * @returns {Promise<number>} - Count of screenshots available
  */
 export async function downloadScreenshots(tid, screenshots) {
-  if (!screenshots || !Array.isArray(screenshots) || screenshots.length === 0) {
-    return 0
-  }
+  if (!screenshots?.length) return 0
   
   const screensDir = join(MEDIA_DIR, tid, 'screens')
   if (!existsSync(screensDir)) {
@@ -114,7 +102,6 @@ export async function downloadScreenshots(tid, screenshots) {
     const screenIndex = i + 1
     const screenPath = join(screensDir, `screen_${screenIndex}`)
     
-    // Skip if already exists (never overwrite)
     if (existsSync(screenPath)) {
       downloaded++
       continue
@@ -131,10 +118,11 @@ export async function downloadScreenshots(tid, screenshots) {
 }
 
 /**
- * Download all media for a game
+ * Download all available media assets for a game
+ * Skips files that already exist on disk
  * @param {string} tid - Title ID
- * @param {Object} gameData - Game data with media URLs
- * @returns {Promise<Object>} - Download results
+ * @param {Object} gameData - TitleDB entry with iconUrl, bannerUrl, screenshots
+ * @returns {Promise<Object>} - Download results {icon, banner, screenshots}
  */
 export async function downloadGameMedia(tid, gameData) {
   const results = {
@@ -143,7 +131,6 @@ export async function downloadGameMedia(tid, gameData) {
     screenshots: 0
   }
   
-  // Download in parallel for better performance
   const [icon, banner, screenshots] = await Promise.all([
     downloadIcon(tid, gameData.iconUrl),
     downloadBanner(tid, gameData.bannerUrl),
