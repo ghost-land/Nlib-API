@@ -109,8 +109,8 @@ CREATE TABLE IF NOT EXISTS nx_ru (
     FOREIGN KEY (tid) REFERENCES nx(tid) ON DELETE CASCADE
 );
 
--- Create citra table for 3DS game data
-CREATE TABLE IF NOT EXISTS citra (
+-- Create ctr table for 3DS game data
+CREATE TABLE IF NOT EXISTS ctr (
     tid VARCHAR(16) PRIMARY KEY,
     uid VARCHAR(32),
     name TEXT,
@@ -131,17 +131,17 @@ CREATE TABLE IF NOT EXISTS citra (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create index on citra tid for faster lookups
-CREATE INDEX IF NOT EXISTS idx_citra_tid ON citra(tid);
+-- Create index on ctr tid for faster lookups
+CREATE INDEX IF NOT EXISTS idx_ctr_tid ON ctr(tid);
 
--- Create index on citra category for filtering
-CREATE INDEX IF NOT EXISTS idx_citra_category ON citra(category);
+-- Create index on ctr category for filtering
+CREATE INDEX IF NOT EXISTS idx_ctr_category ON ctr(category);
 
--- Create index on citra updated_at for recent queries
-CREATE INDEX IF NOT EXISTS idx_citra_updated_at ON citra(updated_at DESC);
+-- Create index on ctr updated_at for recent queries
+CREATE INDEX IF NOT EXISTS idx_ctr_updated_at ON ctr(updated_at DESC);
 
--- Create index on citra region for filtering
-CREATE INDEX IF NOT EXISTS idx_citra_region ON citra(region);
+-- Create index on ctr region for filtering
+CREATE INDEX IF NOT EXISTS idx_ctr_region ON ctr(region);
 
 -- Create sync_log table to track updates
 CREATE TABLE IF NOT EXISTS sync_log (

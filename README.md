@@ -233,12 +233,12 @@ Note: Screenshot URLs are dynamically generated based on the API domain.
 GET /nx/stats
 ```
 
-### Nintendo 3DS Endpoints (`/citra`)
+### Nintendo 3DS Endpoints (`/ctr`)
 
 #### Get Statistics
 
 ```http
-GET /citra/stats
+GET /ctr/stats
 ```
 
 **Example Response:**
@@ -259,7 +259,7 @@ GET /citra/stats
 #### Get Category Titles
 
 ```http
-GET /citra/category/:category
+GET /ctr/category/:category
 ```
 
 **Parameters:**
@@ -281,7 +281,7 @@ GET /citra/category/:category
 #### Get Game Information
 
 ```http
-GET /citra/:tid?fields=name,description
+GET /ctr/:tid?fields=name,description
 ```
 
 **Parameters:**
@@ -306,16 +306,16 @@ GET /citra/:tid?fields=name,description
   "rating_system": {"name": "CERO", "age": "12"},
   "version": "v0.2.0",
   "media": {
-    "banner": "http://api.ghseshop.cc/citra/0004000000030000/banner",
-    "icon": "http://api.ghseshop.cc/citra/0004000000030000/icon",
+    "banner": "http://api.ghseshop.cc/ctr/0004000000030000/banner",
+    "icon": "http://api.ghseshop.cc/ctr/0004000000030000/icon",
     "screenshots": {
-      "compiled": ["http://api.ghseshop.cc/citra/0004000000030000/screen/1"],
+      "compiled": ["http://api.ghseshop.cc/ctr/0004000000030000/screen/1"],
       "uncompiled": {
-        "upper": ["http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/u"],
-        "lower": ["http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/l"]
+        "upper": ["http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/u"],
+        "lower": ["http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/l"]
       }
     },
-    "thumbnails": ["http://api.ghseshop.cc/citra/0004000000030000/thumb/1"]
+    "thumbnails": ["http://api.ghseshop.cc/ctr/0004000000030000/thumb/1"]
   }
 }
 ```
@@ -323,7 +323,7 @@ GET /citra/:tid?fields=name,description
 #### Get Specific Metadata Field
 
 ```http
-GET /citra/:tid/meta/:meta
+GET /ctr/:tid/meta/:meta
 ```
 
 **Parameters:**
@@ -333,21 +333,21 @@ GET /citra/:tid/meta/:meta
 #### Get Media Assets
 
 ```http
-GET /citra/:tid/media          # All media URLs
-GET /citra/:tid/icon           # Icon image
-GET /citra/:tid/banner         # Banner image
-GET /citra/:tid/screens        # List compiled screenshots
-GET /citra/:tid/screen/:num    # Compiled screenshot
-GET /citra/:tid/screen_u       # List uncompiled screenshots
-GET /citra/:tid/screen_u/:num/:screen  # Uncompiled screenshot (u/l)
-GET /citra/:tid/thumbs         # List thumbnails
-GET /citra/:tid/thumb/:num     # Thumbnail image
+GET /ctr/:tid/media          # All media URLs
+GET /ctr/:tid/icon           # Icon image
+GET /ctr/:tid/banner         # Banner image
+GET /ctr/:tid/screens        # List compiled screenshots
+GET /ctr/:tid/screen/:num    # Compiled screenshot
+GET /ctr/:tid/screen_u       # List uncompiled screenshots
+GET /ctr/:tid/screen_u/:num/:screen  # Uncompiled screenshot (u/l)
+GET /ctr/:tid/thumbs         # List thumbnails
+GET /ctr/:tid/thumb/:num     # Thumbnail image
 ```
 
 **Notes:**
 - All images are served in JPEG format
 - Uncompiled screenshots use `u` for upper screen and `l` for lower screen
-- Media files are stored in `media/citra/[category]/[tid]/` directory structure
+- Media files are stored in `media/ctr/[category]/[tid]/` directory structure
 
 ### System Endpoints
 
@@ -395,7 +395,7 @@ Language-specific tables for game descriptions (11 tables: en, ja, es, de, fr, n
 | intro | TEXT | Short introduction |
 | description | TEXT | Full description |
 
-### citra
+### ctr
 
 Main table storing Nintendo 3DS game information.
 
@@ -543,7 +543,7 @@ media/
 │       │   ├── screen_2
 │       │   └── …
 │       └── cache/
-└── citra/
+└── ctr/
     └── [category]/
         └── [tid]/
             ├── icon
@@ -568,7 +568,7 @@ media/
 - Images are expected in JPEG format (original files can be JPEG; converted assets are served as JPEG by the API).
 
 - **Nintendo Switch**: Metadata in PostgreSQL, media in `media/nx/[tid]/`
-- **Nintendo 3DS**: Metadata in PostgreSQL (table `citra`), media in `media/citra/[category]/[tid]/`
+- **Nintendo 3DS**: Metadata in PostgreSQL (table `ctr`), media in `media/ctr/[category]/[tid]/`
 
 ## Important Notes
 

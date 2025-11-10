@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import uptime from './routes/uptime.js'
 import nx from './routes/nx.js'
-import citra from './routes/citra.js'
+import ctr from './routes/ctr.js'
 import { startScheduler } from './services/scheduler.js'
 
 // Load environment variables
@@ -36,6 +36,7 @@ app.get('/robots.txt', (c) => {
 User-agent: *
 Allow: /
 Allow: /nx/
+Allow: /ctr/
 Allow: /uptime
 
 # Sitemap location
@@ -70,6 +71,12 @@ app.get('/sitemap.xml', (c) => {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>${baseUrl}/ctr/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>${baseUrl}/uptime</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
@@ -99,10 +106,20 @@ app.get('/', (c) => {
   return c.html(html)
 })
 
+// Redirect /citra/* to /ctr/* for backward compatibility
+app.all('/citra', (c) => {
+  return c.redirect('/ctr', 301) // Permanent redirect
+})
+
+app.all('/citra/*', (c) => {
+  const path = c.req.path.replace(/^\/citra/, '/ctr')
+  return c.redirect(path, 301) // Permanent redirect
+})
+
 // Routes
 app.route('/uptime', uptime)
 app.route('/nx', nx)
-app.route('/citra', citra)
+app.route('/ctr', ctr)
 
 // Start automatic sync scheduler
 startScheduler()
