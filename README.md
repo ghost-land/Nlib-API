@@ -539,16 +539,33 @@ media/
 │       ├── icon
 │       ├── banner
 │       ├── screens/
+│       │   ├── screen_1
+│       │   ├── screen_2
+│       │   └── …
 │       └── cache/
 └── citra/
     └── [category]/
         └── [tid]/
             ├── icon
             ├── banner
+            ├── top_image
             ├── screen/
+            │   ├── 1
+            │   ├── 2
+            │   └── …
             ├── screen_u/
+            │   ├── 1_u
+            │   ├── 1_l
+            │   ├── 2_u
+            │   ├── 2_l
+            │   └── …
             └── thumb/
+                ├── 1
+                ├── 2
+                └── …
 ```
+- All media assets must be stored without file extensions; only the base name described above should exist on disk.
+- Images are expected in JPEG format (original files can be JPEG; converted assets are served as JPEG by the API).
 
 - **Nintendo Switch**: Metadata in PostgreSQL, media in `media/nx/[tid]/`
 - **Nintendo 3DS**: Metadata in PostgreSQL (table `citra`), media in `media/citra/[category]/[tid]/`
