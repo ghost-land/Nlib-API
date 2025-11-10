@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>Nintendo 3DS API Documentation - Nlib API</title>
+  <meta name="title" content="Nintendo 3DS API Documentation - Nlib API">
+  <meta name="description" content="Complete API documentation for Nlib Nintendo 3DS API. Learn how to access game data, retrieve icons, banners, screenshots, and statistics with our REST API endpoints.">
+  <meta name="keywords" content="Nintendo 3DS API, 3DS API, API documentation, REST API docs, 3DS game data, Nintendo 3DS API endpoints, game metadata API, 3DS library API">
+  <meta name="author" content="Nlib API">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{BASE_URL}}/citra/">
+  <meta property="og:title" content="Nintendo 3DS API Documentation - Nlib API">
+  <meta property="og:description" content="Complete API documentation for Nlib Nintendo 3DS API. Learn how to access game data, retrieve icons, banners, screenshots, and statistics with our REST API endpoints.">
+  <meta property="og:site_name" content="Nlib API">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="{{BASE_URL}}/citra/">
+  <meta property="twitter:title" content="Nintendo 3DS API Documentation - Nlib API">
+  <meta property="twitter:description" content="Complete API documentation for Nlib Nintendo 3DS API. Learn how to access game data, retrieve icons, banners, screenshots, and statistics with our REST API endpoints.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  
+  <!-- Canonical -->
+  <link rel="canonical" href="{{BASE_URL}}/citra/">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/css/nx.css">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Nintendo 3DS API Documentation",
+    "description": "Complete API documentation for Nlib Nintendo 3DS API with endpoints for game data, statistics, and media assets",
+    "url": "{{BASE_URL}}/citra/",
+    "author": {
+      "@type": "Organization",
+      "name": "Nlib API"
+    },
+    "about": {
+      "@type": "WebAPI",
+      "name": "Nlib Nintendo 3DS API",
+      "description": "REST API for Nintendo 3DS game library data"
+    },
+    "articleSection": "API Documentation",
+    "keywords": "Nintendo 3DS API, 3DS API, REST API, API documentation, game data, Nintendo 3DS"
+  }
+  </script>
+</head>
+<body>
+  <div class="background-particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <main class="container">
+    <header class="header">
+      <a href="/" class="back-button" aria-label="Back to home page">← Back</a>
+      <h1 class="title">Nintendo 3DS API</h1>
+      <p class="subtitle">API Documentation</p>
+    </header>
+
+    <div class="doc-container">
+      <!-- Table of Contents -->
+      <nav class="toc">
+        <h2 class="toc-title">Quick Navigation</h2>
+        <div class="toc-grid">
+          <a href="#stats" class="toc-link">Statistics</a>
+          <a href="#category" class="toc-link">Categories</a>
+          <a href="#game" class="toc-link">Game Data</a>
+          <a href="#media" class="toc-link">Media Assets</a>
+          <a href="#screenshots" class="toc-link">Screenshots</a>
+          <a href="#thumbnails" class="toc-link">Thumbnails</a>
+        </div>
+      </nav>
+
+      <!-- Statistics Endpoint -->
+      <section id="stats" class="doc-category">
+        <h2 class="category-title">📊 Statistics</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/stats</code>
+          </div>
+          <p class="doc-description">Retrieve statistics about titles in each category.</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "total": 5844,
+  "categories": {
+    "base": 3515,
+    "dlc": 0,
+    "dsiware": 1202,
+    "updates": 477,
+    "videos": 27,
+    "virtual-console": 623
+  }
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category Endpoint -->
+      <section id="category" class="doc-category">
+        <h2 class="category-title">📁 Categories</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/category/:category</code>
+          </div>
+          <p class="doc-description">List all Title IDs in a specific category.</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>category</code> <span class="param-type">path</span> <span class="required">required</span> - Category name: <code>base</code>, <code>dlc</code>, <code>dsiware</code>, <code>extras</code>, <code>themes</code>, <code>updates</code>, <code>videos</code>, <code>virtual-console</code></li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Request</h3>
+            <pre class="code-block">GET /citra/category/base</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "category": "base",
+  "count": 3515,
+  "titles": [
+    "0004000000030000",
+    "0004000000030100",
+    "0004000000030200"
+  ]
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Data Endpoints -->
+      <section id="game" class="doc-category">
+        <h2 class="category-title">🎮 Game Data</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid</code>
+          </div>
+          <p class="doc-description">Get detailed information about a title by its Title ID, including all available media URLs.</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
+              <li><code>fields</code> <span class="param-type">query</span> <span class="optional">optional</span> - Comma-separated list of fields to include in response. Example: <code>name,description,release_date_on_eshop</code></li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Requests</h3>
+            <pre class="code-block"># Full response
+GET /citra/0004000000030000
+
+# Only specific fields
+GET /citra/0004000000030000?fields=name,description</pre>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Response</h3>
+            <pre class="code-block">{
+  "tid": "0004000000030000",
+  "uid": "50010000009504",
+  "name": "新･光神話 パルテナの鏡",
+  "formal_name": "新･光神話 パルテナの鏡",
+  "description": "冥府軍と、飛べない天使ピットの壮大な戦いを描いたシングルプレイ。",
+  "release_date_on_eshop": "2013-10-31",
+  "product_code": "CTR-N-AKDJ",
+  "platform_name": "3DSカード/ダウンロードソフト",
+  "region": "Japan",
+  "genres": ["アクション", "シューティング"],
+  "features": ["インターネット対応", "3D映像対応"],
+  "languages": ["日本語"],
+  "rating_system": {"name": "CERO", "age": "12"},
+  "version": "v0.2.0",
+  "disclaimer": "パッケージ版に付属している...",
+  "descriptors": [],
+  "media": {
+    "banner": "http://api.ghseshop.cc/citra/0004000000030000/banner",
+    "icon": "http://api.ghseshop.cc/citra/0004000000030000/icon",
+    "screenshots": {
+      "compiled": [
+        "http://api.ghseshop.cc/citra/0004000000030000/screen/1",
+        "http://api.ghseshop.cc/citra/0004000000030000/screen/2"
+      ],
+      "uncompiled": {
+        "upper": [
+          "http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/u"
+        ],
+        "lower": [
+          "http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/l"
+        ]
+      }
+    },
+    "thumbnails": [
+      "http://api.ghseshop.cc/citra/0004000000030000/thumb/1"
+    ]
+  }
+}</pre>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/meta/:meta</code>
+          </div>
+          <p class="doc-description">Retrieve a specific metadata field for a title.</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
+              <li><code>meta</code> <span class="param-type">path</span> <span class="required">required</span> - Metadata field name (e.g., <code>name</code>, <code>description</code>, <code>release_date_on_eshop</code>)</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Requests</h3>
+            <pre class="code-block">GET /citra/0004000000030000/meta/name
+GET /citra/0004000000030000/meta/description
+GET /citra/0004000000030000/meta/release_date_on_eshop</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns the single metadata value (string, number, object, or array depending on the field).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Media Assets Endpoints -->
+      <section id="media" class="doc-category">
+        <h2 class="category-title">🖼️ Media Assets</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/media</code>
+          </div>
+          <p class="doc-description">Get a comprehensive list of all available media for a title.</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "metadata": "http://api.ghseshop.cc/citra/0004000000030000",
+  "banner": "http://api.ghseshop.cc/citra/0004000000030000/banner",
+  "icon": "http://api.ghseshop.cc/citra/0004000000030000/icon",
+  "screenshots": {
+    "compiled": [
+      "http://api.ghseshop.cc/citra/0004000000030000/screen/1",
+      "http://api.ghseshop.cc/citra/0004000000030000/screen/2"
+    ],
+    "uncompiled": {
+      "upper": [
+        "http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/u"
+      ],
+      "lower": [
+        "http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/l"
+      ]
+    }
+  },
+  "thumbnails": [
+    "http://api.ghseshop.cc/citra/0004000000030000/thumb/1"
+  ]
+}</pre>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/icon</code>
+          </div>
+          <p class="doc-description">Get the title's icon image (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>.</p>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/banner</code>
+          </div>
+          <p class="doc-description">Get the title's banner image (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screenshot Endpoints -->
+      <section id="screenshots" class="doc-category">
+        <h2 class="category-title">📸 Screenshots</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/screens</code>
+          </div>
+          <p class="doc-description">Get a list of all available compiled screenshots.</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "count": 3,
+  "screenshots": [
+    "http://api.ghseshop.cc/citra/0004000000030000/screen/1",
+    "http://api.ghseshop.cc/citra/0004000000030000/screen/2",
+    "http://api.ghseshop.cc/citra/0004000000030000/screen/3"
+  ]
+}</pre>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/screen/:num</code>
+          </div>
+          <p class="doc-description">Get a specific compiled screenshot (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
+              <li><code>num</code> <span class="param-type">path</span> <span class="required">required</span> - Screenshot number</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Request</h3>
+            <pre class="code-block">GET /citra/0004000000030000/screen/1</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>.</p>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/screen_u</code>
+          </div>
+          <p class="doc-description">Get a list of all available uncompiled screenshots (upper and lower screens).</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "count": {
+    "upper": 3,
+    "lower": 3,
+    "total": 6
+  },
+  "screenshots": {
+    "upper": [
+      {"number": 1, "url": "http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/u"},
+      {"number": 2, "url": "http://api.ghseshop.cc/citra/0004000000030000/screen_u/2/u"}
+    ],
+    "lower": [
+      {"number": 1, "url": "http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/l"},
+      {"number": 2, "url": "http://api.ghseshop.cc/citra/0004000000030000/screen_u/2/l"}
+    ]
+  }
+}</pre>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/screen_u/:num/:screen</code>
+          </div>
+          <p class="doc-description">Get an uncompiled screenshot (upper or lower screen) (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
+              <li><code>num</code> <span class="param-type">path</span> <span class="required">required</span> - Screenshot number</li>
+              <li><code>screen</code> <span class="param-type">path</span> <span class="required">required</span> - Screen type: <code>u</code> for upper, <code>l</code> for lower</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Requests</h3>
+            <pre class="code-block">GET /citra/0004000000030000/screen_u/1/u  # Upper screen
+GET /citra/0004000000030000/screen_u/1/l  # Lower screen</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Thumbnail Endpoints -->
+      <section id="thumbnails" class="doc-category">
+        <h2 class="category-title">🖼️ Thumbnails</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/thumbs</code>
+          </div>
+          <p class="doc-description">Get a list of all available thumbnails.</p>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "count": 1,
+  "thumbnails": [
+    "http://api.ghseshop.cc/citra/0004000000030000/thumb/1"
+  ]
+}</pre>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/citra/:tid/thumb/:num</code>
+          </div>
+          <p class="doc-description">Get a specific thumbnail (JPEG format).</p>
+          
+          <div class="doc-subsection">
+            <h3>Parameters</h3>
+            <ul class="param-list">
+              <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
+              <li><code>num</code> <span class="param-type">path</span> <span class="required">required</span> - Thumbnail number</li>
+            </ul>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Example Request</h3>
+            <pre class="code-block">GET /citra/0004000000030000/thumb/1</pre>
+          </div>
+          
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <p class="note">Returns raw JPEG image data with <code>Content-Type: image/jpeg</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Information Section -->
+      <section id="info" class="doc-category">
+        <h2 class="category-title">ℹ️ Information</h2>
+
+        <div class="doc-section info">
+          <h3 class="info-title">📝 Important Notes</h3>
+          <ul class="info-list">
+            <li>All Title IDs are automatically converted to uppercase</li>
+            <li>Endpoints can be called with or without a trailing slash</li>
+            <li>All images are served in JPEG format</li>
+            <li>Categories supported: <code>base</code>, <code>dlc</code>, <code>dsiware</code>, <code>extras</code>, <code>themes</code>, <code>updates</code>, <code>videos</code>, <code>virtual-console</code></li>
+            <li>Uncompiled screenshots are separated by upper (<code>u</code>) and lower (<code>l</code>) screens</li>
+            <li>API responses use standard HTTP status codes (200, 404, 500)</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    Nlib API v{{VERSION}} • GPL-3.0
+  </footer>
+</body>
+</html>
+

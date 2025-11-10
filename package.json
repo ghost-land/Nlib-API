@@ -1,15 +1,15 @@
 {
   "name": "nlib-api",
-  "version": "2.0.0",
-  "description": "",
+  "version": "3.0.0",
+  "description": "A modern and performant REST API for Nintendo game library data.",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["nodejs", "rest-api", "restful-api", "hono"],
+  "author": "ghost-land",
   "license": "GPL-3.0",
   "dependencies": {
     "@hono/node-server": "^1.19.5",

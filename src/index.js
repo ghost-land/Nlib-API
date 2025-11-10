@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import uptime from './routes/uptime.js'
 import nx from './routes/nx.js'
+import citra from './routes/citra.js'
 import { startScheduler } from './services/scheduler.js'
 
 // Load environment variables
@@ -101,6 +102,7 @@ app.get('/', (c) => {
 // Routes
 app.route('/uptime', uptime)
 app.route('/nx', nx)
+app.route('/citra', citra)
 
 // Start automatic sync scheduler
 startScheduler()

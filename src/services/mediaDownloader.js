@@ -6,7 +6,7 @@ import { dirname } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const MEDIA_DIR = join(__dirname, '..', '..', 'media')
+const MEDIA_DIR = join(__dirname, '..', '..', 'media', 'nx')
 
 if (!existsSync(MEDIA_DIR)) {
   mkdirSync(MEDIA_DIR, { recursive: true })

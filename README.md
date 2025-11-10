@@ -14,8 +14,9 @@ A modern and performant REST API for Nintendo game library data. Access game inf
 ## Features
 
 - 🎮 Complete Nintendo Switch game database
+- 🎮 Complete Nintendo 3DS game database
 - 🖼️ Game icons, banners, and screenshots
-- 🌍 Multi-language support (11 languages)
+- 🌍 Multi-language support (11 languages for Switch)
 - 📊 Comprehensive statistics
 - 🔄 Automatic daily synchronization with TitleDB
 - 🚀 Fast and lightweight
@@ -26,7 +27,7 @@ A modern and performant REST API for Nintendo game library data. Access game inf
 
 The API is accessible at your deployment URL. All endpoints support trailing slashes.
 
-### Nintendo Switch Endpoints
+### Nintendo Switch Endpoints (`/nx`)
 
 #### Get Game Information
 
@@ -232,26 +233,121 @@ Note: Screenshot URLs are dynamically generated based on the API domain.
 GET /nx/stats
 ```
 
+### Nintendo 3DS Endpoints (`/citra`)
+
+#### Get Statistics
+
+```http
+GET /citra/stats
+```
+
 **Example Response:**
 ```json
 {
-  "success": true,
-  "data": {
-    "total_games": 15420,
-    "last_sync": "2025-10-12T10:30:00Z",
-    "by_type": { "base": 12000, "update": 2500, "dlc": 920 },
-    "games_vs_demos": { "games": 14800, "demos": 620 },
-    "by_region": { "US": 8500, "EU": 4200, "JP": 2720 },
-    "by_console": { "nx": 15420 },
-    "top_publishers": [
-      { "name": "Nintendo", "games_count": 450 }
-    ],
-    "recent_updates": [
-      { "tid": "0100ABC001234000", "name": "Example Game", "updated_at": "..." }
-    ]
+  "total": 5844,
+  "categories": {
+    "base": 3515,
+    "dlc": 0,
+    "dsiware": 1202,
+    "updates": 477,
+    "videos": 27,
+    "virtual-console": 623
   }
 }
 ```
+
+#### Get Category Titles
+
+```http
+GET /citra/category/:category
+```
+
+**Parameters:**
+- `category` (required) - Category name: `base`, `dlc`, `dsiware`, `extras`, `themes`, `updates`, `videos`, `virtual-console`
+
+**Example Response:**
+```json
+{
+  "category": "base",
+  "count": 3515,
+  "titles": [
+    "0004000000030000",
+    "0004000000030100",
+    "0004000000030200"
+  ]
+}
+```
+
+#### Get Game Information
+
+```http
+GET /citra/:tid?fields=name,description
+```
+
+**Parameters:**
+- `tid` (required) - 16-character hexadecimal Title ID
+- `fields` (optional) - Comma-separated list of fields to include
+
+**Example Response:**
+```json
+{
+  "tid": "0004000000030000",
+  "uid": "50010000009504",
+  "name": "新･光神話 パルテナの鏡",
+  "formal_name": "新･光神話 パルテナの鏡",
+  "description": "冥府軍と、飛べない天使ピットの壮大な戦いを描いたシングルプレイ。",
+  "release_date_on_eshop": "2013-10-31",
+  "product_code": "CTR-N-AKDJ",
+  "platform_name": "3DSカード/ダウンロードソフト",
+  "region": "Japan",
+  "genres": ["アクション", "シューティング"],
+  "features": ["インターネット対応", "3D映像対応"],
+  "languages": ["日本語"],
+  "rating_system": {"name": "CERO", "age": "12"},
+  "version": "v0.2.0",
+  "media": {
+    "banner": "http://api.ghseshop.cc/citra/0004000000030000/banner",
+    "icon": "http://api.ghseshop.cc/citra/0004000000030000/icon",
+    "screenshots": {
+      "compiled": ["http://api.ghseshop.cc/citra/0004000000030000/screen/1"],
+      "uncompiled": {
+        "upper": ["http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/u"],
+        "lower": ["http://api.ghseshop.cc/citra/0004000000030000/screen_u/1/l"]
+      }
+    },
+    "thumbnails": ["http://api.ghseshop.cc/citra/0004000000030000/thumb/1"]
+  }
+}
+```
+
+#### Get Specific Metadata Field
+
+```http
+GET /citra/:tid/meta/:meta
+```
+
+**Parameters:**
+- `tid` (required) - 16-character hexadecimal Title ID
+- `meta` (required) - Metadata field name (e.g., `name`, `description`, `release_date_on_eshop`)
+
+#### Get Media Assets
+
+```http
+GET /citra/:tid/media          # All media URLs
+GET /citra/:tid/icon           # Icon image
+GET /citra/:tid/banner         # Banner image
+GET /citra/:tid/screens        # List compiled screenshots
+GET /citra/:tid/screen/:num    # Compiled screenshot
+GET /citra/:tid/screen_u       # List uncompiled screenshots
+GET /citra/:tid/screen_u/:num/:screen  # Uncompiled screenshot (u/l)
+GET /citra/:tid/thumbs         # List thumbnails
+GET /citra/:tid/thumb/:num     # Thumbnail image
+```
+
+**Notes:**
+- All images are served in JPEG format
+- Uncompiled screenshots use `u` for upper screen and `l` for lower screen
+- Media files are stored in `media/citra/[category]/[tid]/` directory structure
 
 ### System Endpoints
 
@@ -298,6 +394,31 @@ Language-specific tables for game descriptions (11 tables: en, ja, es, de, fr, n
 | tid | VARCHAR(16) | Title ID (Primary Key, Foreign Key) |
 | intro | TEXT | Short introduction |
 | description | TEXT | Full description |
+
+### citra
+
+Main table storing Nintendo 3DS game information.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| tid | VARCHAR(16) | Title ID (Primary Key) |
+| uid | VARCHAR(32) | Unique ID |
+| name | TEXT | Game name |
+| formal_name | TEXT | Formal game name |
+| description | TEXT | Game description |
+| release_date_on_eshop | VARCHAR(10) | Release date on eShop (YYYY-MM-DD) |
+| product_code | VARCHAR(32) | Product code |
+| platform_name | TEXT | Platform name |
+| region | VARCHAR(50) | Region |
+| genres | TEXT | Genres (JSON array) |
+| features | TEXT | Features (JSON array) |
+| languages | TEXT | Supported languages (JSON array) |
+| rating_system | TEXT | Rating system (JSON object) |
+| version | VARCHAR(20) | Version |
+| disclaimer | TEXT | Disclaimer text |
+| descriptors | TEXT | Descriptors (JSON array) |
+| category | VARCHAR(50) | Category (base/dlc/dsiware/etc.) |
+| updated_at | TIMESTAMP | Last update timestamp |
 
 ### sync_log
 
@@ -407,15 +528,44 @@ npm start
 # Add DB_DEBUG=true to your .env file
 ```
 
+## Media Storage Structure
+
+Media files are organized by platform:
+
+```
+media/
+├── nx/
+│   └── [tid]/
+│       ├── icon
+│       ├── banner
+│       ├── screens/
+│       └── cache/
+└── citra/
+    └── [category]/
+        └── [tid]/
+            ├── icon
+            ├── banner
+            ├── screen/
+            ├── screen_u/
+            └── thumb/
+```
+
+- **Nintendo Switch**: Metadata in PostgreSQL, media in `media/nx/[tid]/`
+- **Nintendo 3DS**: Metadata in PostgreSQL (table `citra`), media in `media/citra/[category]/[tid]/`
+
 ## Important Notes
 
 - All Title IDs are automatically converted to uppercase
 - Endpoints can be called with or without trailing slashes
 - All images are served in JPEG format
-- Icons support optional resizing (30-4096 pixels, rounded to nearest 10) and are always square
-- Banners support multiple sizes: 240p, 360p, 480p, 540p, 720p, 1080p
-- Banners support custom dimensions: `/banner/:width/:height` (100-1920 x 100-1080)
-- Resized images are cached on disk for optimal performance
+- **Nintendo Switch**:
+  - Icons support optional resizing (30-4096 pixels, rounded to nearest 10) and are always square
+  - Banners support multiple sizes: 240p, 360p, 480p, 540p, 720p, 1080p
+  - Banners support custom dimensions: `/banner/:width/:height` (100-1920 x 100-1080)
+  - Resized images are cached on disk for optimal performance
+- **Nintendo 3DS**:
+  - Screenshots are available in compiled and uncompiled formats
+  - Uncompiled screenshots separate upper (`u`) and lower (`l`) screens
 - Screenshot URLs are generated dynamically based on the API domain
 - Database synchronization runs automatically
 - API responses use standard HTTP status codes (200, 404, 500)

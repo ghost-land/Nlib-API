@@ -109,6 +109,40 @@ CREATE TABLE IF NOT EXISTS nx_ru (
     FOREIGN KEY (tid) REFERENCES nx(tid) ON DELETE CASCADE
 );
 
+-- Create citra table for 3DS game data
+CREATE TABLE IF NOT EXISTS citra (
+    tid VARCHAR(16) PRIMARY KEY,
+    uid VARCHAR(32),
+    name TEXT,
+    formal_name TEXT,
+    description TEXT,
+    release_date_on_eshop VARCHAR(10),
+    product_code VARCHAR(32),
+    platform_name TEXT,
+    region VARCHAR(50),
+    genres TEXT, -- JSON array stored as TEXT
+    features TEXT, -- JSON array stored as TEXT
+    languages TEXT, -- JSON array stored as TEXT
+    rating_system TEXT, -- JSON object stored as TEXT
+    version VARCHAR(20),
+    disclaimer TEXT,
+    descriptors TEXT, -- JSON array stored as TEXT
+    category VARCHAR(50) DEFAULT 'base',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create index on citra tid for faster lookups
+CREATE INDEX IF NOT EXISTS idx_citra_tid ON citra(tid);
+
+-- Create index on citra category for filtering
+CREATE INDEX IF NOT EXISTS idx_citra_category ON citra(category);
+
+-- Create index on citra updated_at for recent queries
+CREATE INDEX IF NOT EXISTS idx_citra_updated_at ON citra(updated_at DESC);
+
+-- Create index on citra region for filtering
+CREATE INDEX IF NOT EXISTS idx_citra_region ON citra(region);
+
 -- Create sync_log table to track updates
 CREATE TABLE IF NOT EXISTS sync_log (
     id SERIAL PRIMARY KEY,
