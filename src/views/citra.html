@@ -103,16 +103,28 @@
           <div class="doc-subsection">
             <h3>Response</h3>
             <pre class="code-block">{
-  "total": 5844,
+  "total": 8769,
   "categories": {
-    "base": 3515,
-    "dlc": 0,
-    "dsiware": 1202,
-    "updates": 477,
-    "videos": 27,
-    "virtual-console": 623
+    "base": 5339,
+    "digital-demos": 120,
+    "kiosk-demos": 45,
+    "region-free": 12,
+    "unknown-other": 8,
+    "dlc": 351,
+    "dsiware": 1599,
+    "extras": 0,
+    "extras/custom-dsiware": 0,
+    "extras/devapps-misc": 5,
+    "extras/hb": 41,
+    "extras/rom-hacks": 10,
+    "extras/translated-games": 3,
+    "updates": 556,
+    "videos": 234,
+    "virtual-console": 690,
+    "themes": 0
   }
 }</pre>
+            <p class="note">Counts are illustrative. Nested extras use keys like <code>extras/hb</code>. Legacy <code>themes</code> may appear if present in the database.</p>
           </div>
         </div>
       </section>
@@ -126,25 +138,28 @@
             <span class="method get">GET</span>
             <code class="endpoint">/ctr/category/:category</code>
           </div>
-          <p class="doc-description">List all Title IDs in a specific category.</p>
+          <p class="doc-description">List all Title IDs in a specific category. Use <code>extras</code> to include every nested extras subfolder.</p>
           
           <div class="doc-subsection">
             <h3>Parameters</h3>
             <ul class="param-list">
-              <li><code>category</code> <span class="param-type">path</span> <span class="required">required</span> - Category name: <code>base</code>, <code>dlc</code>, <code>dsiware</code>, <code>extras</code>, <code>themes</code>, <code>updates</code>, <code>videos</code>, <code>virtual-console</code></li>
+              <li><code>category</code> <span class="param-type">path</span> <span class="required">required</span> - Category name. Top-level: <code>base</code>, <code>digital-demos</code>, <code>kiosk-demos</code>, <code>region-free</code>, <code>unknown-other</code>, <code>dlc</code>, <code>dsiware</code>, <code>extras</code>, <code>updates</code>, <code>videos</code>, <code>virtual-console</code>, <code>themes</code>. Nested extras: <code>extras/hb</code>, <code>extras/rom-hacks</code>, <code>extras/devapps-misc</code>, <code>extras/custom-dsiware</code>, <code>extras/translated-games</code></li>
             </ul>
           </div>
 
           <div class="doc-subsection">
-            <h3>Example Request</h3>
-            <pre class="code-block">GET /ctr/category/base</pre>
+            <h3>Example Requests</h3>
+            <pre class="code-block">GET /ctr/category/base
+GET /ctr/category/kiosk-demos
+GET /ctr/category/extras
+GET /ctr/category/extras/hb</pre>
           </div>
           
           <div class="doc-subsection">
             <h3>Response</h3>
             <pre class="code-block">{
   "category": "base",
-  "count": 3515,
+  "count": 5339,
   "titles": [
     "0004000000030000",
     "0004000000030100",
@@ -170,7 +185,7 @@
             <h3>Parameters</h3>
             <ul class="param-list">
               <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
-              <li><code>fields</code> <span class="param-type">query</span> <span class="optional">optional</span> - Comma-separated list of fields to include in response. Example: <code>name,description,release_date_on_eshop</code></li>
+              <li><code>fields</code> <span class="param-type">query</span> <span class="optional">optional</span> - Comma-separated list of fields to include in response. Example: <code>name,description,publisher,region,category</code></li>
             </ul>
           </div>
 
@@ -180,7 +195,7 @@
 GET /ctr/0004000000030000
 
 # Only specific fields
-GET /ctr/0004000000030000?fields=name,description</pre>
+GET /ctr/0004000000030000?fields=name,description,publisher,region</pre>
           </div>
 
           <div class="doc-subsection">
@@ -194,36 +209,40 @@ GET /ctr/0004000000030000?fields=name,description</pre>
   "release_date_on_eshop": "2013-10-31",
   "product_code": "CTR-N-AKDJ",
   "platform_name": "3DSカード/ダウンロードソフト",
-  "region": "Japan",
+  "region": "JP",
   "genres": ["アクション", "シューティング"],
   "features": ["インターネット対応", "3D映像対応"],
-  "languages": ["日本語"],
+  "languages": ["ja"],
   "rating_system": {"name": "CERO", "age": "12"},
   "version": "v0.2.0",
   "disclaimer": "パッケージ版に付属している...",
   "descriptors": [],
+  "publisher": "Nintendo",
+  "smdh": {"flags": ["Allow3D", "SaveData"]},
+  "category": "base",
   "media": {
-    "banner": "http://api.ghseshop.cc/ctr/0004000000030000/banner",
-    "icon": "http://api.ghseshop.cc/ctr/0004000000030000/icon",
+    "banner": "{{BASE_URL}}/ctr/0004000000030000/banner",
+    "icon": "{{BASE_URL}}/ctr/0004000000030000/icon",
     "screenshots": {
       "compiled": [
-        "http://api.ghseshop.cc/ctr/0004000000030000/screen/1",
-        "http://api.ghseshop.cc/ctr/0004000000030000/screen/2"
+        "{{BASE_URL}}/ctr/0004000000030000/screen/1",
+        "{{BASE_URL}}/ctr/0004000000030000/screen/2"
       ],
       "uncompiled": {
         "upper": [
-          "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/u"
+          "{{BASE_URL}}/ctr/0004000000030000/screen_u/1/u"
         ],
         "lower": [
-          "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/l"
+          "{{BASE_URL}}/ctr/0004000000030000/screen_u/1/l"
         ]
       }
     },
     "thumbnails": [
-      "http://api.ghseshop.cc/ctr/0004000000030000/thumb/1"
+      "{{BASE_URL}}/ctr/0004000000030000/thumb/1"
     ]
   }
 }</pre>
+            <p class="note"><code>region</code> uses uppercase ISO / market codes (<code>JP</code>, <code>US</code>, <code>EU</code>, <code>FR</code>, <code>DE</code>, <code>GB</code>, <code>FREE</code>, …). Languages use ISO-639 codes (<code>ja</code>, <code>en</code>, …).</p>
           </div>
         </div>
 
@@ -238,15 +257,16 @@ GET /ctr/0004000000030000?fields=name,description</pre>
             <h3>Parameters</h3>
             <ul class="param-list">
               <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
-              <li><code>meta</code> <span class="param-type">path</span> <span class="required">required</span> - Metadata field name (e.g., <code>name</code>, <code>description</code>, <code>release_date_on_eshop</code>)</li>
+              <li><code>meta</code> <span class="param-type">path</span> <span class="required">required</span> - Field name: <code>name</code>, <code>formal_name</code>, <code>description</code>, <code>publisher</code>, <code>region</code>, <code>category</code>, <code>genres</code>, <code>languages</code>, <code>rating_system</code>, <code>smdh</code>, <code>release_date_on_eshop</code>, …</li>
             </ul>
           </div>
 
           <div class="doc-subsection">
             <h3>Example Requests</h3>
             <pre class="code-block">GET /ctr/0004000000030000/meta/name
-GET /ctr/0004000000030000/meta/description
-GET /ctr/0004000000030000/meta/release_date_on_eshop</pre>
+GET /ctr/0004000000030000/meta/publisher
+GET /ctr/0004000000030000/meta/region
+GET /ctr/0004000000030000/meta/smdh</pre>
           </div>
           
           <div class="doc-subsection">
@@ -270,25 +290,25 @@ GET /ctr/0004000000030000/meta/release_date_on_eshop</pre>
           <div class="doc-subsection">
             <h3>Response</h3>
             <pre class="code-block">{
-  "metadata": "http://api.ghseshop.cc/ctr/0004000000030000",
-  "banner": "http://api.ghseshop.cc/ctr/0004000000030000/banner",
-  "icon": "http://api.ghseshop.cc/ctr/0004000000030000/icon",
+  "metadata": "{{BASE_URL}}/ctr/0004000000030000",
+  "banner": "{{BASE_URL}}/ctr/0004000000030000/banner",
+  "icon": "{{BASE_URL}}/ctr/0004000000030000/icon",
   "screenshots": {
     "compiled": [
-      "http://api.ghseshop.cc/ctr/0004000000030000/screen/1",
-      "http://api.ghseshop.cc/ctr/0004000000030000/screen/2"
+      "{{BASE_URL}}/ctr/0004000000030000/screen/1",
+      "{{BASE_URL}}/ctr/0004000000030000/screen/2"
     ],
     "uncompiled": {
       "upper": [
-        "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/u"
+        "{{BASE_URL}}/ctr/0004000000030000/screen_u/1/u"
       ],
       "lower": [
-        "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/l"
+        "{{BASE_URL}}/ctr/0004000000030000/screen_u/1/l"
       ]
     }
   },
   "thumbnails": [
-    "http://api.ghseshop.cc/ctr/0004000000030000/thumb/1"
+    "{{BASE_URL}}/ctr/0004000000030000/thumb/1"
   ]
 }</pre>
           </div>
@@ -337,9 +357,9 @@ GET /ctr/0004000000030000/meta/release_date_on_eshop</pre>
             <pre class="code-block">{
   "count": 3,
   "screenshots": [
-    "http://api.ghseshop.cc/ctr/0004000000030000/screen/1",
-    "http://api.ghseshop.cc/ctr/0004000000030000/screen/2",
-    "http://api.ghseshop.cc/ctr/0004000000030000/screen/3"
+    "{{BASE_URL}}/ctr/0004000000030000/screen/1",
+    "{{BASE_URL}}/ctr/0004000000030000/screen/2",
+    "{{BASE_URL}}/ctr/0004000000030000/screen/3"
   ]
 }</pre>
           </div>
@@ -388,12 +408,12 @@ GET /ctr/0004000000030000/meta/release_date_on_eshop</pre>
   },
   "screenshots": {
     "upper": [
-      {"number": 1, "url": "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/u"},
-      {"number": 2, "url": "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/2/u"}
+      {"number": 1, "url": "{{BASE_URL}}/ctr/0004000000030000/screen_u/1/u"},
+      {"number": 2, "url": "{{BASE_URL}}/ctr/0004000000030000/screen_u/2/u"}
     ],
     "lower": [
-      {"number": 1, "url": "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/l"},
-      {"number": 2, "url": "http://api.ghseshop.cc/ctr/0004000000030000/screen_u/2/l"}
+      {"number": 1, "url": "{{BASE_URL}}/ctr/0004000000030000/screen_u/1/l"},
+      {"number": 2, "url": "{{BASE_URL}}/ctr/0004000000030000/screen_u/2/l"}
     ]
   }
 }</pre>
@@ -445,7 +465,7 @@ GET /ctr/0004000000030000/screen_u/1/l  # Lower screen</pre>
             <pre class="code-block">{
   "count": 1,
   "thumbnails": [
-    "http://api.ghseshop.cc/ctr/0004000000030000/thumb/1"
+    "{{BASE_URL}}/ctr/0004000000030000/thumb/1"
   ]
 }</pre>
           </div>
@@ -488,7 +508,10 @@ GET /ctr/0004000000030000/screen_u/1/l  # Lower screen</pre>
             <li>All Title IDs are automatically converted to uppercase</li>
             <li>Endpoints can be called with or without a trailing slash</li>
             <li>All images are served in JPEG format</li>
-            <li>Categories supported: <code>base</code>, <code>dlc</code>, <code>dsiware</code>, <code>extras</code>, <code>themes</code>, <code>updates</code>, <code>videos</code>, <code>virtual-console</code></li>
+            <li>Metadata is refreshed automatically (new / changed titles every 12 hours)</li>
+            <li>Regions use uppercase ISO / market codes (<code>JP</code>, <code>US</code>, <code>EU</code>, <code>FREE</code>, …)</li>
+            <li>Categories: <code>base</code>, <code>digital-demos</code>, <code>kiosk-demos</code>, <code>region-free</code>, <code>unknown-other</code>, <code>dlc</code>, <code>dsiware</code>, <code>extras</code> (+ nested <code>extras/*</code>), <code>updates</code>, <code>videos</code>, <code>virtual-console</code>, <code>themes</code></li>
+            <li>Response fields include <code>publisher</code>, <code>smdh</code>, and <code>category</code></li>
             <li>Uncompiled screenshots are separated by upper (<code>u</code>) and lower (<code>l</code>) screens</li>
             <li>API responses use standard HTTP status codes (200, 404, 500)</li>
           </ul>

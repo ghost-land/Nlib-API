@@ -2,12 +2,22 @@ import { existsSync, readdirSync } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { CTR_CATEGORIES } from './ctrCategories.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// CTR media directory structure: media/ctr/[category]/[tid]/
+// CTR media directory structure: media/ctr/[category]/[tid]/ (category may be nested e.g. extras/hb)
 const CTR_MEDIA_DIR = join(__dirname, '..', '..', 'media', 'ctr')
+
+/**
+ * Build filesystem path segments for a category (supports extras/hb).
+ * @param {string} category
+ * @returns {string[]}
+ */
+function categorySegments(category) {
+  return String(category).split('/').filter(Boolean)
+}
 
 /**
  * Get the path to a CTR title directory
@@ -16,17 +26,33 @@ const CTR_MEDIA_DIR = join(__dirname, '..', '..', 'media', 'ctr')
  * @returns {string|null} - Full path to title directory or null if not found
  */
 function getCtrTitleDir(tid, category = null) {
-  const categories = category 
-    ? [category]
-    : ['base', 'dlc', 'dsiware', 'extras', 'themes', 'updates', 'videos', 'virtual-console']
-  
+  const categories = category ? [category] : CTR_CATEGORIES
+
   for (const cat of categories) {
-    const tidDir = join(CTR_MEDIA_DIR, cat, tid)
+    const tidDir = join(CTR_MEDIA_DIR, ...categorySegments(cat), tid)
     if (existsSync(tidDir)) {
       return tidDir
     }
   }
-  
+
+  // Fallback: scan top-level + one extras nesting level for unknown categories
+  if (!category && existsSync(CTR_MEDIA_DIR)) {
+    for (const top of readdirSync(CTR_MEDIA_DIR, { withFileTypes: true })) {
+      if (!top.isDirectory()) continue
+      const direct = join(CTR_MEDIA_DIR, top.name, tid)
+      if (existsSync(direct)) return direct
+
+      if (top.name === 'extras') {
+        const extrasRoot = join(CTR_MEDIA_DIR, 'extras')
+        for (const sub of readdirSync(extrasRoot, { withFileTypes: true })) {
+          if (!sub.isDirectory()) continue
+          const nested = join(extrasRoot, sub.name, tid)
+          if (existsSync(nested)) return nested
+        }
+      }
+    }
+  }
+
   return null
 }
 

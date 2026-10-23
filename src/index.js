@@ -10,11 +10,10 @@ import nx from './routes/nx.js'
 import ctr from './routes/ctr.js'
 import { startScheduler } from './services/scheduler.js'
 
-// Load environment variables
-dotenv.config()
-
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+
+dotenv.config({ path: join(__dirname, '..', '.env') })
 
 // Read package.json for version
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'))

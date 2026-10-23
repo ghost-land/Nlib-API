@@ -1,11 +1,15 @@
+const path = require('path')
+
 module.exports = {
   apps: [{
     name: 'nlib-api',
     script: 'src/index.js',
-    interpreter: 'bun',
-    instances: 'max',
-    exec_mode: 'cluster',
-    env_production: {
+    cwd: __dirname,
+    interpreter: 'node',
+    instances: 1,
+    exec_mode: 'fork',
+    env_file: path.join(__dirname, '.env'),
+    env: {
       NODE_ENV: 'production'
     }
   }]

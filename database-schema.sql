@@ -110,6 +110,8 @@ CREATE TABLE IF NOT EXISTS nx_ru (
 );
 
 -- Create ctr table for 3DS game data
+-- Region: uppercase ISO / market codes (JP, US, EU, FR, DE, GB, FREE, …)
+-- Category may be nested (e.g. extras/hb)
 CREATE TABLE IF NOT EXISTS ctr (
     tid VARCHAR(16) PRIMARY KEY,
     uid VARCHAR(32),
@@ -127,21 +129,22 @@ CREATE TABLE IF NOT EXISTS ctr (
     version VARCHAR(20),
     disclaimer TEXT,
     descriptors TEXT, -- JSON array stored as TEXT
-    category VARCHAR(50) DEFAULT 'base',
+    category VARCHAR(64) DEFAULT 'base',
+    publisher TEXT,
+    smdh TEXT, -- JSON object stored as TEXT
+    source_hash VARCHAR(40), -- git blob SHA of meta.json (change detection)
+    source_path TEXT,
+    synced_at TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create index on ctr tid for faster lookups
 CREATE INDEX IF NOT EXISTS idx_ctr_tid ON ctr(tid);
-
--- Create index on ctr category for filtering
 CREATE INDEX IF NOT EXISTS idx_ctr_category ON ctr(category);
-
--- Create index on ctr updated_at for recent queries
 CREATE INDEX IF NOT EXISTS idx_ctr_updated_at ON ctr(updated_at DESC);
-
--- Create index on ctr region for filtering
 CREATE INDEX IF NOT EXISTS idx_ctr_region ON ctr(region);
+CREATE INDEX IF NOT EXISTS idx_ctr_source_hash ON ctr(source_hash);
+CREATE INDEX IF NOT EXISTS idx_ctr_synced_at ON ctr(synced_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ctr_publisher ON ctr(publisher);
 
 -- Create sync_log table to track updates
 CREATE TABLE IF NOT EXISTS sync_log (

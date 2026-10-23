@@ -1,6 +1,5 @@
 import db from '../database/init.js'
-
-const CATEGORIES = ['base', 'dlc', 'dsiware', 'extras', 'themes', 'updates', 'videos', 'virtual-console']
+import { CTR_CATEGORIES, buildCategoryFilter, isValidCtrCategory } from './ctrCategories.js'
 
 /**
  * Get metadata JSON for a CTR title from database
@@ -11,11 +10,10 @@ export async function getCtrMetadata(tid) {
   try {
     const stmt = db.prepare('SELECT * FROM ctr WHERE tid = $1')
     const row = await stmt.get(tid)
-    
+
     if (!row) return null
-    
-    // Parse JSON fields
-    const metadata = {
+
+    return {
       tid: row.tid,
       uid: row.uid,
       name: row.name,
@@ -31,10 +29,11 @@ export async function getCtrMetadata(tid) {
       rating_system: row.rating_system ? JSON.parse(row.rating_system) : null,
       version: row.version,
       disclaimer: row.disclaimer,
-      descriptors: row.descriptors ? JSON.parse(row.descriptors) : null
+      descriptors: row.descriptors ? JSON.parse(row.descriptors) : null,
+      publisher: row.publisher || null,
+      smdh: row.smdh ? JSON.parse(row.smdh) : null,
+      category: row.category || null
     }
-    
-    return metadata
   } catch (error) {
     console.error(`Error reading metadata for ${tid}:`, error.message)
     return null
@@ -50,8 +49,10 @@ export async function getCtrMetadata(tid) {
 export async function getCtrMetadataField(tid, field) {
   const metadata = await getCtrMetadata(tid)
   if (!metadata) return null
-  
-  return metadata[field] || null
+
+  return Object.prototype.hasOwnProperty.call(metadata, field)
+    ? metadata[field]
+    : null
 }
 
 /**
@@ -64,25 +65,35 @@ export async function getCtrStats() {
       total: 0,
       categories: {}
     }
-    
-    // Get total count
+
     const totalStmt = db.prepare('SELECT COUNT(*) as count FROM ctr')
     const totalResult = await totalStmt.get()
     stats.total = parseInt(totalResult.count) || 0
-    
-    // Get count per category
-    for (const category of CATEGORIES) {
-      const categoryStmt = db.prepare('SELECT COUNT(*) as count FROM ctr WHERE category = $1')
-      const categoryResult = await categoryStmt.get(category)
-      stats.categories[category] = parseInt(categoryResult.count) || 0
+
+    // Aggregate counts grouped by stored category (includes nested extras/*)
+    const groupStmt = db.prepare(`
+      SELECT category, COUNT(*) as count
+      FROM ctr
+      GROUP BY category
+      ORDER BY category
+    `)
+    const groups = await groupStmt.all()
+
+    for (const cat of CTR_CATEGORIES) {
+      stats.categories[cat] = 0
     }
-    
+
+    for (const row of groups) {
+      const cat = row.category || 'unknown'
+      stats.categories[cat] = parseInt(row.count) || 0
+    }
+
     return stats
   } catch (error) {
     console.error('Error getting CTR stats:', error.message)
     return {
       total: 0,
-      categories: CATEGORIES.reduce((acc, cat) => {
+      categories: CTR_CATEGORIES.reduce((acc, cat) => {
         acc[cat] = 0
         return acc
       }, {})
@@ -92,21 +103,25 @@ export async function getCtrStats() {
 
 /**
  * Get all TIDs for a specific category from database
- * @param {string} category - Category name
+ * @param {string} category - Category name (extras returns all extras/*)
  * @returns {Promise<Array>} - Array of TIDs
  */
 export async function getCtrCategoryTitles(category) {
-  if (!CATEGORIES.includes(category)) {
+  const filter = buildCategoryFilter(category)
+  if (!filter) {
     return []
   }
-  
+
   try {
-    const stmt = db.prepare('SELECT tid FROM ctr WHERE category = $1 ORDER BY tid')
-    const rows = await stmt.all(category)
-    return rows.map(row => row.tid)
+    const stmt = db.prepare(
+      `SELECT tid FROM ctr WHERE ${filter.sql} ORDER BY tid`
+    )
+    const rows = await stmt.all(...filter.params)
+    return rows.map((row) => row.tid)
   } catch (error) {
     console.error(`Error reading category ${category}:`, error.message)
     return []
   }
 }
 
+export { CTR_CATEGORIES, isValidCtrCategory }
