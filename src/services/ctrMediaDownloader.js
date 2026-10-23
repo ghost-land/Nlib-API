@@ -1,16 +1,93 @@
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { access, copyFile, mkdir, readdir, stat } from 'fs/promises'
+import { constants } from 'fs'
+import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { dirname } from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const CTR_MEDIA_DIR = join(__dirname, '..', '..', 'media', 'ctr')
-const RAW_BASE = 'https://raw.githubusercontent.com/ghost-land/3dsdb/main'
 
 /**
- * Resolve local media directory for a CTR title (supports nested extras/*).
+ * Map a 3dsdb title-relative media path to the local extensionless layout.
+ * @param {string} relativePath - e.g. icon.jpg | screenshots/screenshot_1.jpg
+ * @returns {string|null}
+ */
+export function mapCtrRemoteMediaToLocal(relativePath) {
+  const normalized = String(relativePath || '').replace(/\\/g, '/').replace(/^\/+/, '')
+
+  if (normalized === 'icon.jpg') return 'icon'
+  if (normalized === 'banner.jpg') return 'banner'
+  if (normalized === 'top_image.jpg') return 'top_image'
+
+  let match = normalized.match(/^screenshots\/screenshot_(\d+)\.jpg$/i)
+  if (match) return `screen/${match[1]}`
+
+  match = normalized.match(/^screenshots_uncompiled\/screenshot_(\d+)_upper\.jpg$/i)
+  if (match) return `screen_u/${match[1]}_u`
+
+  match = normalized.match(/^screenshots_uncompiled\/screenshot_(\d+)_lower\.jpg$/i)
+  if (match) return `screen_u/${match[1]}_l`
+
+  match = normalized.match(/^thumbnails\/thumbnail_(\d+)\.jpg$/i)
+  if (match) return `thumb/${match[1]}`
+
+  return null
+}
+
+/**
+ * @param {string} path
+ * @returns {Promise<boolean>}
+ */
+async function pathExists(path) {
+  try {
+    await access(path, constants.F_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Recursively list media files under a title folder in the 3dsdb mirror.
+ * @param {string} titleDir
+ * @returns {Promise<Array<{ remote: string, local: string, absolute: string }>>}
+ */
+export async function listCtrMediaAssetsFromTitleDir(titleDir) {
+  const assets = []
+  if (!titleDir || !(await pathExists(titleDir))) return assets
+
+  /**
+   * @param {string} dir
+   * @param {string} prefix
+   */
+  async function walk(dir, prefix) {
+    let entries
+    try {
+      entries = await readdir(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name
+      const abs = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(abs, rel)
+        continue
+      }
+      if (!entry.isFile()) continue
+      const local = mapCtrRemoteMediaToLocal(rel)
+      if (!local) continue
+      assets.push({ remote: rel, local, absolute: abs })
+    }
+  }
+
+  await walk(titleDir, '')
+  return assets
+}
+
+/**
  * @param {string} tid
  * @param {string} category
  * @returns {string}
@@ -21,68 +98,84 @@ function getTitleMediaDir(tid, category) {
 }
 
 /**
- * @param {string} url
- * @returns {Promise<Buffer|null>}
+ * Fast check: does this title already have at least an icon locally?
+ * @param {string} tid
+ * @param {string} category
+ * @returns {Promise<boolean>}
  */
-async function downloadImage(url) {
-  try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(30000)
-    })
-    if (!response.ok) return null
-    return Buffer.from(await response.arrayBuffer())
-  } catch {
-    return null
-  }
+export async function hasCtrLocalIcon(tid, category) {
+  if (!tid || !category) return false
+  return pathExists(join(getTitleMediaDir(tid, category), 'icon'))
 }
 
 /**
- * Download icon.jpg / banner.jpg from 3dsdb when missing locally.
- * Files are stored without extension to match existing CTR media layout.
+ * Copy missing CTR media from mirror → media/ctr (async, non-blocking).
  * @param {string} tid
- * @param {string} category - e.g. base | extras/hb
- * @returns {Promise<{ icon: boolean, banner: boolean }>}
+ * @param {string} category
+ * @param {Array<{ remote: string, local: string, absolute?: string }>|null} [assets]
+ * @param {string|null} [titleSourceDir]
+ * @returns {Promise<{ downloaded: number, present: number, failed: number }>}
  */
-export async function downloadCtrMediaFrom3dsdb(tid, category) {
-  const result = { icon: false, banner: false }
-  if (!tid || !category) return result
+export async function syncCtrMediaFromLocal(
+  tid,
+  category,
+  assets = null,
+  titleSourceDir = null
+) {
+  const stats = { downloaded: 0, present: 0, failed: 0 }
+  if (!tid || !category) return stats
 
   const tidUpper = tid.toUpperCase()
-  const dir = getTitleMediaDir(tidUpper, category)
-  const repoDir = `${RAW_BASE}/db/3ds/${category}/${tidUpper}`
+  const destDir = getTitleMediaDir(tidUpper, category)
 
-  const iconPath = join(dir, 'icon')
-  const bannerPath = join(dir, 'banner')
+  let planned = Array.isArray(assets) && assets.length > 0
+    ? assets.filter((a) => a?.local && (a.absolute || a.remote))
+    : null
 
-  const needIcon = !existsSync(iconPath)
-  const needBanner = !existsSync(bannerPath)
-  if (!needIcon && !needBanner) {
-    return { icon: true, banner: true }
+  if ((!planned || planned.length === 0) && titleSourceDir) {
+    planned = await listCtrMediaAssetsFromTitleDir(titleSourceDir)
   }
 
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true })
+  if (!planned || planned.length === 0) {
+    return stats
   }
 
-  if (needIcon) {
-    const data = await downloadImage(`${repoDir}/icon.jpg`)
-    if (data) {
-      writeFileSync(iconPath, data)
-      result.icon = true
+  for (const asset of planned) {
+    const destPath = join(destDir, asset.local)
+    if (await pathExists(destPath)) {
+      stats.present++
+      continue
     }
-  } else {
-    result.icon = true
-  }
 
-  if (needBanner) {
-    const data = await downloadImage(`${repoDir}/banner.jpg`)
-    if (data) {
-      writeFileSync(bannerPath, data)
-      result.banner = true
+    const sourcePath = asset.absolute
+      || (titleSourceDir ? join(titleSourceDir, asset.remote) : null)
+
+    if (!sourcePath || !(await pathExists(sourcePath))) {
+      stats.failed++
+      continue
     }
-  } else {
-    result.banner = true
+
+    try {
+      const st = await stat(sourcePath)
+      if (!st.isFile()) {
+        stats.failed++
+        continue
+      }
+      await mkdir(dirname(destPath), { recursive: true })
+      await copyFile(sourcePath, destPath)
+      stats.downloaded++
+    } catch {
+      stats.failed++
+    }
   }
 
-  return result
+  return stats
+}
+
+/**
+ * @deprecated Prefer syncCtrMediaFromLocal with a git mirror.
+ */
+export async function downloadCtrMediaFrom3dsdb(tid, category, assets = null) {
+  void assets
+  return syncCtrMediaFromLocal(tid, category, null, null)
 }

@@ -51,18 +51,24 @@ export function startScheduler() {
   })
 
   cron.schedule('0 4,16 * * *', async () => {
-    await enqueueSync('automatic CTR synchronization', syncCtrFrom3dsdb)
+    await enqueueSync(
+      'automatic CTR synchronization',
+      () => syncCtrFrom3dsdb({ mode: 'scheduled' })
+    )
   })
 
   console.log('Scheduler started:')
   console.log('  - 03:00: NX TIDs → TitleDB (sequential)')
   console.log('  - 15:00: TitleDB')
-  console.log('  - 04:00 & 16:00: CTR')
+  console.log('  - 04:00 & 16:00: CTR (skip if 3dsdb commit unchanged)')
   console.log('  - Lock: only one sync at a time (NX / TitleDB / CTR)')
 
-  // Boot: CTR first (smaller / faster), then Switch (NX → TitleDB)
+  // Boot: CTR first (scan/repair), then Switch (NX → TitleDB)
   console.log('Running initial synchronization...')
-  enqueueSync('initial CTR synchronization', syncCtrFrom3dsdb)
+  enqueueSync(
+    'initial CTR synchronization',
+    () => syncCtrFrom3dsdb({ mode: 'startup' })
+  )
     .then(() => enqueueSync('initial NX TIDs synchronization', syncNXGames))
     .then(() => enqueueSync('initial TitleDB synchronization', syncTitleDB))
     .catch((err) => {

@@ -488,10 +488,12 @@ All sync jobs share a single queue: **only one sync runs at a time** (NX, TitleD
 
 ### 3DS — CTR (4:00 AM & 4:00 PM)
 
-- Inventories Title IDs and categories from the upstream dump
-- Diffs metadata by content hash (`source_hash`) — only new / changed titles are fetched
-- Upserts metadata (upstream is source of truth for changed records)
-- Downloads missing icon / banner media when available
+- Maintains a **local git mirror** of `ghost-land/3dsdb` under `data/3dsdb` (clone once, then `git fetch`)
+- Scans the mirror on disk — no GitHub API rate limits
+- Diffs `meta.json` blob SHA vs `source_hash` (also re-fills incomplete rows with null `name`)
+- Upserts changed metadata; copies missing media (`icon`, `banner`, `top_image`, screens, thumbs) into `media/ctr/`
+- **Scheduled syncs** (04:00 / 16:00): if the mirror commit is unchanged since the last success → no-op
+- **Startup sync**: always scans/repairs gaps even when the commit is unchanged
 
 ### Switch data priority rules
 
