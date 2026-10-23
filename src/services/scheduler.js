@@ -60,10 +60,11 @@ export function startScheduler() {
   console.log('  - 04:00 & 16:00: CTR')
   console.log('  - Lock: only one sync at a time (NX / TitleDB / CTR)')
 
+  // Boot: CTR first (smaller / faster), then Switch (NX → TitleDB)
   console.log('Running initial synchronization...')
-  enqueueSync('initial NX TIDs synchronization', syncNXGames)
+  enqueueSync('initial CTR synchronization', syncCtrFrom3dsdb)
+    .then(() => enqueueSync('initial NX TIDs synchronization', syncNXGames))
     .then(() => enqueueSync('initial TitleDB synchronization', syncTitleDB))
-    .then(() => enqueueSync('initial CTR synchronization', syncCtrFrom3dsdb))
     .catch((err) => {
       console.error('Initial synchronization error:', err)
     })
