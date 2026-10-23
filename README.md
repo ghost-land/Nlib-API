@@ -4,8 +4,9 @@ A modern and performant REST API for Nintendo game library data. Access game inf
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![API Status](https://img.shields.io/badge/status-online-success.svg)](https://api.nlib.cc/uptime)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20.10-brightgreen.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%3E%3D12-316192.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/ghost-land/Nlib-API)
 
 [![GitHub Stars](https://img.shields.io/github/stars/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/issues)
@@ -18,7 +19,7 @@ A modern and performant REST API for Nintendo game library data. Access game inf
 - 🖼️ Game icons, banners, and screenshots
 - 🌍 Multi-language support (11 languages for Switch)
 - 📊 Comprehensive statistics
-- 🔄 Automatic daily synchronization with TitleDB
+- 🔄 Automatic synchronization (Switch TitleDB + 3DS metadata, serialized)
 - 🚀 Fast and lightweight
 
 ## API Documentation
@@ -244,14 +245,22 @@ GET /ctr/stats
 **Example Response:**
 ```json
 {
-  "total": 5844,
+  "total": 8769,
   "categories": {
-    "base": 3515,
-    "dlc": 0,
-    "dsiware": 1202,
-    "updates": 477,
-    "videos": 27,
-    "virtual-console": 623
+    "base": 5339,
+    "digital-demos": 120,
+    "kiosk-demos": 45,
+    "region-free": 12,
+    "unknown-other": 8,
+    "dlc": 351,
+    "dsiware": 1599,
+    "extras": 0,
+    "extras/hb": 41,
+    "extras/rom-hacks": 10,
+    "updates": 556,
+    "videos": 234,
+    "virtual-console": 690,
+    "themes": 0
   }
 }
 ```
@@ -263,13 +272,16 @@ GET /ctr/category/:category
 ```
 
 **Parameters:**
-- `category` (required) - Category name: `base`, `dlc`, `dsiware`, `extras`, `themes`, `updates`, `videos`, `virtual-console`
+- `category` (required) - Category name
+  - Top-level: `base`, `digital-demos`, `kiosk-demos`, `region-free`, `unknown-other`, `dlc`, `dsiware`, `extras`, `updates`, `videos`, `virtual-console`, `themes`
+  - Nested extras: `extras/hb`, `extras/rom-hacks`, `extras/devapps-misc`, `extras/custom-dsiware`, `extras/translated-games`
+  - `extras` returns all titles under `extras` and `extras/*`
 
 **Example Response:**
 ```json
 {
   "category": "base",
-  "count": 3515,
+  "count": 5339,
   "titles": [
     "0004000000030000",
     "0004000000030100",
@@ -281,7 +293,7 @@ GET /ctr/category/:category
 #### Get Game Information
 
 ```http
-GET /ctr/:tid?fields=name,description
+GET /ctr/:tid?fields=name,description,publisher,region
 ```
 
 **Parameters:**
@@ -299,26 +311,35 @@ GET /ctr/:tid?fields=name,description
   "release_date_on_eshop": "2013-10-31",
   "product_code": "CTR-N-AKDJ",
   "platform_name": "3DSカード/ダウンロードソフト",
-  "region": "Japan",
+  "region": "JP",
   "genres": ["アクション", "シューティング"],
   "features": ["インターネット対応", "3D映像対応"],
-  "languages": ["日本語"],
+  "languages": ["ja"],
   "rating_system": {"name": "CERO", "age": "12"},
   "version": "v0.2.0",
+  "disclaimer": null,
+  "descriptors": [],
+  "publisher": "Nintendo",
+  "smdh": {"flags": ["Allow3D", "SaveData"]},
+  "category": "base",
   "media": {
-    "banner": "http://api.ghseshop.cc/ctr/0004000000030000/banner",
-    "icon": "http://api.ghseshop.cc/ctr/0004000000030000/icon",
+    "banner": "https://api.nlib.cc/ctr/0004000000030000/banner",
+    "icon": "https://api.nlib.cc/ctr/0004000000030000/icon",
     "screenshots": {
-      "compiled": ["http://api.ghseshop.cc/ctr/0004000000030000/screen/1"],
+      "compiled": ["https://api.nlib.cc/ctr/0004000000030000/screen/1"],
       "uncompiled": {
-        "upper": ["http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/u"],
-        "lower": ["http://api.ghseshop.cc/ctr/0004000000030000/screen_u/1/l"]
+        "upper": ["https://api.nlib.cc/ctr/0004000000030000/screen_u/1/u"],
+        "lower": ["https://api.nlib.cc/ctr/0004000000030000/screen_u/1/l"]
       }
     },
-    "thumbnails": ["http://api.ghseshop.cc/ctr/0004000000030000/thumb/1"]
+    "thumbnails": ["https://api.nlib.cc/ctr/0004000000030000/thumb/1"]
   }
 }
 ```
+
+**Notes:**
+- `region` uses uppercase ISO / market codes (`JP`, `US`, `EU`, `FR`, `DE`, `GB`, `FREE`, …)
+- Languages use ISO-639 codes (`ja`, `en`, …)
 
 #### Get Specific Metadata Field
 
@@ -328,7 +349,7 @@ GET /ctr/:tid/meta/:meta
 
 **Parameters:**
 - `tid` (required) - 16-character hexadecimal Title ID
-- `meta` (required) - Metadata field name (e.g., `name`, `description`, `release_date_on_eshop`)
+- `meta` (required) - Field name (e.g. `name`, `publisher`, `region`, `category`, `smdh`, `release_date_on_eshop`)
 
 #### Get Media Assets
 
@@ -347,7 +368,7 @@ GET /ctr/:tid/thumb/:num     # Thumbnail image
 **Notes:**
 - All images are served in JPEG format
 - Uncompiled screenshots use `u` for upper screen and `l` for lower screen
-- Media files are stored in `media/ctr/[category]/[tid]/` directory structure
+- Media files are stored in `media/ctr/[category]/[tid]/` (category may be nested, e.g. `extras/hb`)
 
 ### System Endpoints
 
@@ -409,15 +430,20 @@ Main table storing Nintendo 3DS game information.
 | release_date_on_eshop | VARCHAR(10) | Release date on eShop (YYYY-MM-DD) |
 | product_code | VARCHAR(32) | Product code |
 | platform_name | TEXT | Platform name |
-| region | VARCHAR(50) | Region |
+| region | VARCHAR(50) | Region (uppercase ISO / market code, e.g. `JP`, `US`, `EU`) |
 | genres | TEXT | Genres (JSON array) |
 | features | TEXT | Features (JSON array) |
-| languages | TEXT | Supported languages (JSON array) |
+| languages | TEXT | Supported languages (JSON array, ISO-639) |
 | rating_system | TEXT | Rating system (JSON object) |
 | version | VARCHAR(20) | Version |
 | disclaimer | TEXT | Disclaimer text |
 | descriptors | TEXT | Descriptors (JSON array) |
-| category | VARCHAR(50) | Category (base/dlc/dsiware/etc.) |
+| category | VARCHAR(64) | Category (`base`, `extras/hb`, …) |
+| publisher | TEXT | Publisher name |
+| smdh | TEXT | SMDH metadata (JSON object) |
+| source_hash | VARCHAR(40) | Upstream content hash (change detection) |
+| source_path | TEXT | Upstream metadata path |
+| synced_at | TIMESTAMP | Last successful upstream sync |
 | updated_at | TIMESTAMP | Last update timestamp |
 
 ### sync_log
@@ -430,32 +456,46 @@ Tracks synchronization history.
 | synced_at | TIMESTAMP | Sync timestamp |
 | games_count | INTEGER | Number of games synced |
 | status | VARCHAR(50) | Sync status |
-| source | VARCHAR(100) | Sync source |
+| source | VARCHAR(100) | Sync source (`nx`, `titledb-multi`, `3dsdb`, …) |
 
 ## Automatic Synchronization
 
-The API uses a two-stage synchronization system:
+All sync jobs share a single queue: **only one sync runs at a time** (NX, TitleDB, or CTR).
 
-### Stage 1: NX TIDs (Daily at 3:00 AM)
+### On startup
+
+1. CTR metadata sync (smaller / faster)
+2. NX TIDs
+3. TitleDB
+
+### Switch — NX TIDs (Daily at 3:00 AM)
 
 **Source:** `https://nx-missing.ghostland.at/data/working.txt`
 
 - Downloads list of all Nintendo Switch Title IDs
 - Indexes base games (TIDs starting with `01` and ending with `000`)
 - Creates database entries with TID only
+- Then runs TitleDB enrichment in the same cron slot
 
-### Stage 2: TitleDB (Every 12 hours at 3:00 AM & 3:00 PM)
+### Switch — TitleDB (3:00 AM after NX, and 3:00 PM)
 
 **Source:** `https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/`
 
 - Downloads game metadata from multiple regions
 - Enriches existing TIDs with detailed information
 - Supports 11 languages
-- **Never overwrites existing data** - preserves data quality
+- **Never overwrites existing non-null data**
 
-### Data Priority Rules
+### 3DS — CTR (4:00 AM & 4:00 PM)
 
-1. Existing (non-null) data is never overwritten
+- Inventories Title IDs and categories from the upstream dump
+- Diffs metadata by content hash (`source_hash`) — only new / changed titles are fetched
+- Upserts metadata (upstream is source of truth for changed records)
+- Downloads missing icon / banner media when available
+
+### Switch data priority rules
+
+1. Existing (non-null) data is never overwritten by TitleDB
 2. US.en is processed first for English content
 3. Multiple regions provide data redundancy
 
@@ -463,7 +503,7 @@ The API uses a two-stage synchronization system:
 
 ### Requirements
 
-- Node.js 18+
+- Node.js **20.10+** (recommended: **24 LTS**)
 - PostgreSQL 12+
 
 ### Database Setup
@@ -484,7 +524,6 @@ GRANT ALL PRIVILEGES ON DATABASE nlib_api TO nlib_user;
 2. **Create tables:**
 
 ```bash
-# Execute the schema file
 psql -h localhost -U nlib_user -d nlib_api -f database-schema.sql
 ```
 
@@ -544,7 +583,7 @@ media/
 │       │   └── …
 │       └── cache/
 └── ctr/
-    └── [category]/
+    └── [category]/          # e.g. base, or extras/hb
         └── [tid]/
             ├── icon
             ├── banner
@@ -583,8 +622,10 @@ media/
 - **Nintendo 3DS**:
   - Screenshots are available in compiled and uncompiled formats
   - Uncompiled screenshots separate upper (`u`) and lower (`l`) screens
+  - Regions use uppercase ISO / market codes (`JP`, `US`, `EU`, `FREE`, …)
+  - Response includes `publisher`, `smdh`, and `category`
 - Screenshot URLs are generated dynamically based on the API domain
-- Database synchronization runs automatically
+- Database synchronization runs automatically (serialized queue)
 - API responses use standard HTTP status codes (200, 404, 500)
 
 ## License
@@ -593,7 +634,7 @@ This project is licensed under the GPL-3.0 License - see the LICENSE file for de
 
 ## Credits
 
-- Game data sourced from [TitleDB](https://github.com/blawar/titledb)
+- Switch game data from [TitleDB](https://github.com/blawar/titledb)
 - Nintendo Switch Title IDs from [nx-missing](https://nx-missing.ghostland.at/)
 
 ## Contributing
