@@ -18,7 +18,8 @@ import {
   getCtrStats,
   getCtrCategoryTitles,
   getCtrCatalogTitle,
-  getCtrRelated
+  getCtrRelated,
+  isValidCtrCategory
 } from '../services/ctrData.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -57,11 +58,15 @@ ctr.get('/stats', async (c) => {
 })
 
 // Get category titles (must be before /:tid to avoid conflicts)
-ctr.get('/category/:category', async (c) => {
+// {.+} allows nested categories: /category/extras/hb
+ctr.get('/category/:category{.+}', async (c) => {
   try {
-    const category = c.req.param('category')
+    const category = decodeURIComponent(c.req.param('category')).replace(/\/+$/, '')
+    if (!isValidCtrCategory(category)) {
+      return c.json({ success: false, error: 'Invalid category' }, 404)
+    }
+
     const titles = await getCtrCategoryTitles(category)
-    
     return c.json({
       category,
       count: titles.length,

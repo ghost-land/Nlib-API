@@ -55,11 +55,12 @@ ctr.get('/stats', async (c) => {
 })
 
 // Get category titles (must be before /:tid to avoid conflicts)
-ctr.get('/category/:category', async (c) => {
+// {.+} allows nested categories: /category/extras/hb
+ctr.get('/category/:category{.+}', async (c) => {
   try {
-    const category = c.req.param('category')
+    const category = decodeURIComponent(c.req.param('category')).replace(/\/+$/, '')
     const titles = await getCtrCategoryTitles(category)
-    
+
     return c.json({
       category,
       count: titles.length,
