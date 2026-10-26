@@ -16,7 +16,9 @@ import {
   getCtrMetadata,
   getCtrMetadataField,
   getCtrStats,
-  getCtrCategoryTitles
+  getCtrCategoryTitles,
+  getCtrCatalogTitle,
+  getCtrRelated
 } from '../services/ctrData.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -65,6 +67,23 @@ ctr.get('/category/:category', async (c) => {
       count: titles.length,
       titles
     })
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// Title catalog family — id form is kind/platform:serial (e.g. game/CTR:KPF)
+// Route as /catalog/:kind/:platformSerial so slashes stay URL-safe.
+ctr.get('/catalog/:kind/:platformSerial', async (c) => {
+  try {
+    const kind = c.req.param('kind')
+    const platformSerial = c.req.param('platformSerial')
+    const id = `${kind}/${platformSerial}`
+    const title = await getCtrCatalogTitle(id)
+    if (!title) {
+      return c.json({ success: false, error: 'Catalog title not found' }, 404)
+    }
+    return c.json(title)
   } catch (error) {
     return c.json({ success: false, error: error.message }, 500)
   }
@@ -334,11 +353,36 @@ ctr.get('/:tid/meta/:meta', async (c) => {
   }
 })
 
+// Cross-region + related content for one Title ID (from title_catalog)
+ctr.get('/:tid/related', async (c) => {
+  try {
+    const tid = c.req.param('tid').toUpperCase()
+    if (!/^[0-9A-F]{16}$/.test(tid)) {
+      return c.json({ success: false, error: 'Invalid Title ID' }, 400)
+    }
+
+    const related = await getCtrRelated(tid)
+    if (!related) {
+      return c.json({ success: false, error: 'No catalog link for this title' }, 404)
+    }
+    return c.json(related)
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
 // Get full title metadata with media
 ctr.get('/:tid', async (c) => {
   try {
     const tid = c.req.param('tid').toUpperCase()
     const fieldsParam = c.req.query('fields') // Optional fields filter
+    // related=0|false skips the catalog tree (lighter payload)
+    const relatedParam = c.req.query('related')
+    const includeRelated = !(
+      relatedParam === '0' ||
+      relatedParam === 'false' ||
+      relatedParam === 'no'
+    )
     
     const metadata = await getCtrMetadata(tid)
     
@@ -365,6 +409,18 @@ ctr.get('/:tid', async (c) => {
         },
         thumbnails: []
       }
+    }
+
+    if (includeRelated && metadata.catalog_id) {
+      response.related = await getCtrRelated(tid, {
+        catalog_id: metadata.catalog_id,
+        catalog_role: metadata.catalog_role,
+        market: metadata.market,
+        region_conflict: metadata.region_conflict,
+        region: metadata.region
+      })
+    } else {
+      response.related = null
     }
     
     // Check banner
@@ -396,7 +452,7 @@ ctr.get('/:tid', async (c) => {
       const filteredResponse = {}
       
       for (const field of requestedFields) {
-        if (response.hasOwnProperty(field)) {
+        if (Object.prototype.hasOwnProperty.call(response, field)) {
           filteredResponse[field] = response[field]
         }
       }

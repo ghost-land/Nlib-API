@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS nx_ru (
 -- Create ctr table for 3DS game data
 -- Region: uppercase ISO / market codes (JP, US, EU, FR, DE, GB, FREE, …)
 -- Category may be nested (e.g. extras/hb)
+-- catalog_* / market: links from 3dsdb data/title_catalog.json (cross-region + related)
 CREATE TABLE IF NOT EXISTS ctr (
     tid VARCHAR(16) PRIMARY KEY,
     uid VARCHAR(32),
@@ -132,6 +133,10 @@ CREATE TABLE IF NOT EXISTS ctr (
     category VARCHAR(64) DEFAULT 'base',
     publisher TEXT,
     smdh TEXT, -- JSON object stored as TEXT
+    catalog_id VARCHAR(64), -- e.g. game/CTR:KPF
+    catalog_role VARCHAR(16), -- base | update | dlc | demo | extra
+    market VARCHAR(10), -- product-code letter market
+    region_conflict BOOLEAN DEFAULT FALSE,
     source_hash VARCHAR(40), -- git blob SHA of meta.json (change detection)
     source_path TEXT,
     synced_at TIMESTAMP,
@@ -145,6 +150,31 @@ CREATE INDEX IF NOT EXISTS idx_ctr_region ON ctr(region);
 CREATE INDEX IF NOT EXISTS idx_ctr_source_hash ON ctr(source_hash);
 CREATE INDEX IF NOT EXISTS idx_ctr_synced_at ON ctr(synced_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ctr_publisher ON ctr(publisher);
+CREATE INDEX IF NOT EXISTS idx_ctr_catalog_id ON ctr(catalog_id);
+CREATE INDEX IF NOT EXISTS idx_ctr_catalog_role ON ctr(catalog_role);
+CREATE INDEX IF NOT EXISTS idx_ctr_market ON ctr(market);
+
+-- Title families from 3dsdb data/title_catalog.json
+CREATE TABLE IF NOT EXISTS ctr_catalog (
+    id VARCHAR(64) PRIMARY KEY,
+    kind VARCHAR(32) NOT NULL,
+    platform VARCHAR(8) NOT NULL,
+    serial VARCHAR(16) NOT NULL,
+    name TEXT,
+    regions TEXT,
+    markets TEXT,
+    counts TEXT,
+    releases TEXT,
+    catalog_version INTEGER,
+    source_hash VARCHAR(40),
+    synced_at TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ctr_catalog_kind ON ctr_catalog(kind);
+CREATE INDEX IF NOT EXISTS idx_ctr_catalog_platform ON ctr_catalog(platform);
+CREATE INDEX IF NOT EXISTS idx_ctr_catalog_serial ON ctr_catalog(serial);
+CREATE INDEX IF NOT EXISTS idx_ctr_catalog_updated_at ON ctr_catalog(updated_at DESC);
 
 -- Create sync_log table to track updates
 CREATE TABLE IF NOT EXISTS sync_log (

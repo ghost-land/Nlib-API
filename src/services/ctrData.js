@@ -1,5 +1,6 @@
 import db from '../database/init.js'
 import { CTR_CATEGORIES, buildCategoryFilter, isValidCtrCategory } from './ctrCategories.js'
+import { getCtrCatalogTitle, getCtrRelated } from './ctrCatalog.js'
 
 /**
  * Get metadata JSON for a CTR title from database
@@ -23,6 +24,8 @@ export async function getCtrMetadata(tid) {
       product_code: row.product_code,
       platform_name: row.platform_name,
       region: row.region,
+      market: row.market || null,
+      region_conflict: Boolean(row.region_conflict),
       genres: row.genres ? JSON.parse(row.genres) : null,
       features: row.features ? JSON.parse(row.features) : null,
       languages: row.languages ? JSON.parse(row.languages) : null,
@@ -32,7 +35,9 @@ export async function getCtrMetadata(tid) {
       descriptors: row.descriptors ? JSON.parse(row.descriptors) : null,
       publisher: row.publisher || null,
       smdh: row.smdh ? JSON.parse(row.smdh) : null,
-      category: row.category || null
+      category: row.category || null,
+      catalog_id: row.catalog_id || null,
+      catalog_role: row.catalog_role || null
     }
   } catch (error) {
     console.error(`Error reading metadata for ${tid}:`, error.message)
@@ -63,7 +68,12 @@ export async function getCtrStats() {
   try {
     const stats = {
       total: 0,
-      categories: {}
+      categories: {},
+      catalog: {
+        titles: 0,
+        linked_tids: 0,
+        multi_region_titles: 0
+      }
     }
 
     const totalStmt = db.prepare('SELECT COUNT(*) as count FROM ctr')
@@ -88,6 +98,28 @@ export async function getCtrStats() {
       stats.categories[cat] = parseInt(row.count) || 0
     }
 
+    try {
+      const catalogTotal = await db.prepare(
+        'SELECT COUNT(*) AS count FROM ctr_catalog'
+      ).get()
+      stats.catalog.titles = parseInt(catalogTotal?.count, 10) || 0
+
+      const linked = await db.prepare(
+        'SELECT COUNT(*) AS count FROM ctr WHERE catalog_id IS NOT NULL'
+      ).get()
+      stats.catalog.linked_tids = parseInt(linked?.count, 10) || 0
+
+      // regions JSON array length > 1 ⇒ multi-region family
+      const multi = await db.prepare(`
+        SELECT COUNT(*) AS count FROM ctr_catalog
+        WHERE jsonb_array_length(regions::jsonb) > 1
+      `).get()
+      stats.catalog.multi_region_titles = parseInt(multi?.count, 10) || 0
+    } catch (catalogError) {
+      // Table may not exist until migration is applied
+      console.warn('CTR catalog stats unavailable:', catalogError.message)
+    }
+
     return stats
   } catch (error) {
     console.error('Error getting CTR stats:', error.message)
@@ -96,7 +128,8 @@ export async function getCtrStats() {
       categories: CTR_CATEGORIES.reduce((acc, cat) => {
         acc[cat] = 0
         return acc
-      }, {})
+      }, {}),
+      catalog: { titles: 0, linked_tids: 0, multi_region_titles: 0 }
     }
   }
 }
@@ -124,4 +157,4 @@ export async function getCtrCategoryTitles(category) {
   }
 }
 
-export { CTR_CATEGORIES, isValidCtrCategory }
+export { CTR_CATEGORIES, isValidCtrCategory, getCtrCatalogTitle, getCtrRelated }

@@ -82,6 +82,7 @@
         <div class="toc-grid">
           <a href="#stats" class="toc-link">Statistics</a>
           <a href="#category" class="toc-link">Categories</a>
+          <a href="#catalog" class="toc-link">Title Catalog</a>
           <a href="#game" class="toc-link">Game Data</a>
           <a href="#media" class="toc-link">Media Assets</a>
           <a href="#screenshots" class="toc-link">Screenshots</a>
@@ -122,9 +123,14 @@
     "videos": 234,
     "virtual-console": 690,
     "themes": 0
+  },
+  "catalog": {
+    "titles": 3449,
+    "linked_tids": 8440,
+    "multi_region_titles": 1802
   }
 }</pre>
-            <p class="note">Counts are illustrative. Nested extras use keys like <code>extras/hb</code>. Legacy <code>themes</code> may appear if present in the database.</p>
+            <p class="note">Counts are illustrative. Nested extras use keys like <code>extras/hb</code>. Legacy <code>themes</code> may appear if present in the database. <code>catalog</code> comes from 3dsdb <code>title_catalog.json</code>.</p>
           </div>
         </div>
       </section>
@@ -170,6 +176,69 @@ GET /ctr/category/extras/hb</pre>
         </div>
       </section>
 
+      <!-- Title Catalog -->
+      <section id="catalog" class="doc-category">
+        <h2 class="category-title">🔗 Title Catalog</h2>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/ctr/catalog/:kind/:platformSerial</code>
+          </div>
+          <p class="doc-description">Title family from 3dsdb <code>title_catalog.json</code>: same game across regions, with linked update / DLC / demos / extras. Id form is <code>kind/platform:serial</code> (e.g. <code>game/CTR:KPF</code>).</p>
+
+          <div class="doc-subsection">
+            <h3>Example Requests</h3>
+            <pre class="code-block">GET /ctr/catalog/game/CTR:KPF
+GET /ctr/catalog/dsiware/TWL:KVM
+GET /ctr/catalog/virtual-console/CTR:AAA</pre>
+          </div>
+
+          <div class="doc-subsection">
+            <h3>Response</h3>
+            <pre class="code-block">{
+  "id": "game/CTR:KPF",
+  "kind": "game",
+  "platform": "CTR",
+  "serial": "KPF",
+  "name": "50 Pinch Barrage!!",
+  "regions": ["JP", "US"],
+  "markets": ["JP", "US"],
+  "counts": { "skus": 2, "regions": 2, "updates": 1, "dlc": 0, "demos": 1, "extras": 0 },
+  "releases": {
+    "JP": [{
+      "base": { "tid": "000400000014BA00", "region": "JP", "market": "JP" },
+      "update": { "tid": "0004000E0014BA00", "version": "v4.4.0" },
+      "dlc": [],
+      "demos": [{ "tid": "000400020014BA01" }],
+      "extras": []
+    }],
+    "US": [{
+      "base": { "tid": "0004000000164400", "region": "US", "market": "US" },
+      "update": null,
+      "dlc": [],
+      "demos": [],
+      "extras": []
+    }]
+  }
+}</pre>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-header">
+            <span class="method get">GET</span>
+            <code class="endpoint">/ctr/:tid/related</code>
+          </div>
+          <p class="doc-description">Resolve catalog links for one Title ID: regional SKUs, update, DLC, demos, extras.</p>
+
+          <div class="doc-subsection">
+            <h3>Example Request</h3>
+            <pre class="code-block">GET /ctr/000400000014BA00/related</pre>
+          </div>
+        </div>
+      </section>
+
       <!-- Game Data Endpoints -->
       <section id="game" class="doc-category">
         <h2 class="category-title">🎮 Game Data</h2>
@@ -179,13 +248,14 @@ GET /ctr/category/extras/hb</pre>
             <span class="method get">GET</span>
             <code class="endpoint">/ctr/:tid</code>
           </div>
-          <p class="doc-description">Get detailed information about a title by its Title ID, including all available media URLs.</p>
+          <p class="doc-description">Get detailed information about a title by its Title ID, including all available media URLs and catalog <code>related</code> tree (regions / update / DLC / demos).</p>
           
           <div class="doc-subsection">
             <h3>Parameters</h3>
             <ul class="param-list">
               <li><code>tid</code> <span class="param-type">path</span> <span class="required">required</span> - 16-character hexadecimal Title ID</li>
-              <li><code>fields</code> <span class="param-type">query</span> <span class="optional">optional</span> - Comma-separated list of fields to include in response. Example: <code>name,description,publisher,region,category</code></li>
+              <li><code>fields</code> <span class="param-type">query</span> <span class="optional">optional</span> - Comma-separated list of fields to include in response. Example: <code>name,description,publisher,region,category,related</code></li>
+              <li><code>related</code> <span class="param-type">query</span> <span class="optional">optional</span> - Set to <code>0</code> / <code>false</code> to omit the catalog related tree</li>
             </ul>
           </div>
 

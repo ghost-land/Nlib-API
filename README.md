@@ -6,7 +6,7 @@ A modern and performant REST API for Nintendo game library data. Access game inf
 [![API Status](https://img.shields.io/badge/status-online-success.svg)](https://api.nlib.cc/uptime)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20.10-brightgreen.svg?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-%3E%3D12-316192.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/ghost-land/Nlib-API)
+[![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)](https://github.com/ghost-land/Nlib-API)
 
 [![GitHub Stars](https://img.shields.io/github/stars/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/ghost-land/Nlib-API?style=flat)](https://github.com/ghost-land/Nlib-API/issues)
@@ -261,6 +261,11 @@ GET /ctr/stats
     "videos": 234,
     "virtual-console": 690,
     "themes": 0
+  },
+  "catalog": {
+    "titles": 3449,
+    "linked_tids": 8440,
+    "multi_region_titles": 1802
   }
 }
 ```
@@ -290,15 +295,53 @@ GET /ctr/category/:category
 }
 ```
 
+#### Get Title Catalog Family
+
+Groups the same game across regions (from 3dsdb `data/title_catalog.json`). Id form: `kind/platform:serial`.
+
+```http
+GET /ctr/catalog/:kind/:platformSerial
+```
+
+**Example:** `GET /ctr/catalog/game/CTR:KPF`
+
+**Example Response:**
+```json
+{
+  "id": "game/CTR:KPF",
+  "kind": "game",
+  "platform": "CTR",
+  "serial": "KPF",
+  "name": "50 Pinch Barrage!!",
+  "regions": ["JP", "US"],
+  "markets": ["JP", "US"],
+  "counts": { "skus": 2, "regions": 2, "updates": 1, "dlc": 0, "demos": 1, "extras": 0 },
+  "releases": {
+    "JP": [{ "base": { "tid": "000400000014BA00", "region": "JP", "market": "JP" }, "update": { "tid": "0004000E0014BA00" }, "dlc": [], "demos": [], "extras": [] }],
+    "US": [{ "base": { "tid": "0004000000164400", "region": "US", "market": "US" }, "update": null, "dlc": [], "demos": [], "extras": [] }]
+  }
+}
+```
+
+#### Get Related Titles (by Title ID)
+
+```http
+GET /ctr/:tid/related
+```
+
+Returns the catalog family for that Title ID: regional SKUs, update, DLC, demos, extras.
+
 #### Get Game Information
 
 ```http
 GET /ctr/:tid?fields=name,description,publisher,region
+GET /ctr/:tid?related=0
 ```
 
 **Parameters:**
 - `tid` (required) - 16-character hexadecimal Title ID
 - `fields` (optional) - Comma-separated list of fields to include
+- `related` (optional) - Set to `0` / `false` to omit the catalog `related` tree
 
 **Example Response:**
 ```json
@@ -312,6 +355,10 @@ GET /ctr/:tid?fields=name,description,publisher,region
   "product_code": "CTR-N-AKDJ",
   "platform_name": "3DSカード/ダウンロードソフト",
   "region": "JP",
+  "market": "JP",
+  "region_conflict": false,
+  "catalog_id": "game/CTR:AKD",
+  "catalog_role": "base",
   "genres": ["アクション", "シューティング"],
   "features": ["インターネット対応", "3D映像対応"],
   "languages": ["ja"],
@@ -441,9 +488,33 @@ Main table storing Nintendo 3DS game information.
 | category | VARCHAR(64) | Category (`base`, `extras/hb`, …) |
 | publisher | TEXT | Publisher name |
 | smdh | TEXT | SMDH metadata (JSON object) |
+| catalog_id | VARCHAR(64) | Title family id (`game/CTR:KPF`) |
+| catalog_role | VARCHAR(16) | Role in family (`base`, `update`, `dlc`, `demo`, `extra`) |
+| market | VARCHAR(10) | Console market from product-code letter |
+| region_conflict | BOOLEAN | `meta.region` market ≠ letter market |
 | source_hash | VARCHAR(40) | Upstream content hash (change detection) |
 | source_path | TEXT | Upstream metadata path |
 | synced_at | TIMESTAMP | Last successful upstream sync |
+| updated_at | TIMESTAMP | Last update timestamp |
+
+### ctr_catalog
+
+Title families from 3dsdb `data/title_catalog.json` (cross-region + related content).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | VARCHAR(64) | Primary key (`kind/platform:serial`) |
+| kind | VARCHAR(32) | `game`, `virtual-console`, `dsiware` |
+| platform | VARCHAR(8) | `CTR` or `TWL` |
+| serial | VARCHAR(16) | Product-code serial |
+| name | TEXT | Display name (region-priority pick) |
+| regions | TEXT | JSON array of SKU region codes |
+| markets | TEXT | JSON array of console markets |
+| counts | TEXT | JSON object (`skus`, `regions`, `updates`, `dlc`, `demos`, `extras`) |
+| releases | TEXT | JSON object keyed by region → SKU list |
+| catalog_version | INTEGER | Upstream catalog schema version |
+| source_hash | VARCHAR(40) | Hash of `title_catalog.json` |
+| synced_at | TIMESTAMP | Last catalog sync |
 | updated_at | TIMESTAMP | Last update timestamp |
 
 ### sync_log
@@ -492,6 +563,7 @@ All sync jobs share a single queue: **only one sync runs at a time** (NX, TitleD
 - Scans the mirror on disk — no GitHub API rate limits
 - Diffs `meta.json` blob SHA vs `source_hash` (also re-fills incomplete rows with null `name`)
 - Upserts changed metadata; copies missing media (`icon`, `banner`, `top_image`, screens, thumbs) into `media/ctr/`
+- Syncs **`data/title_catalog.json`** → `ctr_catalog` + links (`catalog_id`, `catalog_role`, `market`, `region_conflict`) on `ctr`
 - **Scheduled syncs** (04:00 / 16:00): if the mirror commit is unchanged since the last success → no-op
 - **Startup sync**: always scans/repairs gaps even when the commit is unchanged
 
@@ -527,6 +599,12 @@ GRANT ALL PRIVILEGES ON DATABASE nlib_api TO nlib_user;
 
 ```bash
 psql -h localhost -U nlib_user -d nlib_api -f database-schema.sql
+```
+
+Existing databases (CTR already deployed) — apply the title catalog migration:
+
+```bash
+psql -h localhost -U nlib_user -d nlib_api -f migrations/001_ctr_title_catalog.sql
 ```
 
 ### Application Setup

@@ -19,6 +19,7 @@ import {
   hasCtrLocalIcon,
   syncCtrMediaFromLocal
 } from './ctrMediaDownloader.js'
+import { syncCtrTitleCatalog } from './ctrCatalog.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -540,7 +541,7 @@ export async function syncCtrFrom3dsdb(options = {}) {
   console.log(`=== Starting CTR synchronization (local 3dsdb mirror, mode=${mode}) ===`)
 
   try {
-    console.log('\n[1/4] Updating 3dsdb git mirror')
+    console.log('\n[1/5] Updating 3dsdb git mirror')
     const mirror = await ensure3dsdbMirror()
     const lastState = readSyncState()
 
@@ -555,7 +556,7 @@ export async function syncCtrFrom3dsdb(options = {}) {
         `  ✓ Mirror already synced at ${mirror.commit.slice(0, 7)}` +
           (lastState.syncedAt ? ` (last success ${lastState.syncedAt})` : '')
       )
-      console.log('  ✓ Skipping inventory / scan / media (no new commits)')
+      console.log('  ✓ Skipping inventory / scan / catalog / media (no new commits)')
       console.log('=========================================')
       return {
         success: true,
@@ -575,10 +576,10 @@ export async function syncCtrFrom3dsdb(options = {}) {
       console.log('  → No previous sync state — full sync')
     }
 
-    console.log('\n[2/4] TID inventory')
+    console.log('\n[2/5] TID inventory')
     const inventory = await syncTidInventory(mirror.path)
 
-    console.log('\n[3/4] Scanning mirror + diff vs database')
+    console.log('\n[3/5] Scanning mirror + diff vs database')
     console.log(
       `  → Pace: meta×${CONCURRENCY}, media×${MEDIA_CONCURRENCY}, yield ${MEDIA_YIELD_MS}ms`
     )
@@ -607,11 +608,14 @@ export async function syncCtrFrom3dsdb(options = {}) {
     if (pending.length === 0) {
       console.log('  ✓ Metadata already up to date')
     } else {
-      console.log('\n[3b/4] Applying metadata updates')
+      console.log('\n[3b/5] Applying metadata updates')
       applyStats = await processMetaUpdates(pending)
     }
 
-    console.log('\n[4/4] Syncing media from mirror → media/ctr (gentle)')
+    console.log('\n[4/5] Syncing title catalog (cross-region + related)')
+    const catalogStats = await syncCtrTitleCatalog(mirror.path)
+
+    console.log('\n[5/5] Syncing media from mirror → media/ctr (gentle)')
     let mediaStats = {
       titlesWithDownloads: 0,
       downloaded: 0,
@@ -653,6 +657,10 @@ export async function syncCtrFrom3dsdb(options = {}) {
     console.log(`  - Applied: ${processed} (new ≈ ${applyStats.added}, updates ≈ ${applyStats.updated})`)
     console.log(`  - Failed: ${applyStats.failed}`)
     console.log(`  - Unchanged: ${unchanged}`)
+    console.log(
+      `Catalog: ${catalogStats.titles} titles, ${catalogStats.linked} links` +
+        (catalogStats.skipped ? ` (skipped: ${catalogStats.reason})` : '')
+    )
     console.log(`Media copied: ${mediaStats.downloaded}`)
     console.log(`Duration: ${(duration / 1000).toFixed(2)}s`)
     console.log('=========================================')
@@ -670,6 +678,9 @@ export async function syncCtrFrom3dsdb(options = {}) {
       updated: applyStats.updated,
       failed: applyStats.failed,
       unchanged,
+      catalogTitles: catalogStats.titles,
+      catalogLinked: catalogStats.linked,
+      catalogSkipped: catalogStats.skipped,
       mediaDownloaded: mediaStats.downloaded,
       mediaTouched: mediaStats.titlesWithDownloads,
       duration
